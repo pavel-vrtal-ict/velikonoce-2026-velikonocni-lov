@@ -9,7 +9,7 @@
 :root{--cream:#fdf8f0;--green:#3a7d44;--gold:#c9922a;--dark:#1a1a2e;--radius:16px}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);overflow:hidden;height:100vh;height:100dvh;width:100vw}
-#intro{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#e8f5e0 0%,#fdf8f0 50%,#fde8cc 100%);z-index:200;gap:0}
+#intro{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#e8f5e0 0%,#fdf8f0 50%,#fde8cc 100%);z-index:200;gap:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:22px 0}
 #intro h1{font-family:'Playfair Display',serif;font-size:clamp(2rem,5vw,3.5rem);color:var(--green);text-align:center;line-height:1.1;margin-bottom:10px}
 #intro h1 em{font-style:italic;color:var(--gold)}
 #intro .sub{font-size:1rem;color:#666;margin-bottom:28px;letter-spacing:.05em;text-align:center;line-height:1.6;max-width:440px;padding:0 20px}
@@ -24,6 +24,8 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 .field-error.hidden{visibility:hidden}
 #start-btn{font-family:'Lato',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.15em;text-transform:uppercase;background:var(--green);color:#fff;border:none;padding:14px 42px;border-radius:50px;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px #3a7d4433}
 #start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px #3a7d4455}
+.link-btn{margin-top:10px;background:transparent;border:1px solid #e0d4bc;border-radius:999px;padding:10px 18px;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:#666}
+.link-btn:hover{border-color:var(--gold);color:var(--gold)}
 .intro-deco{font-size:2.5rem;margin-bottom:20px;animation:float 3s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .lb-preview{margin-top:28px;width:100%;max-width:420px;padding:0 20px}
@@ -78,6 +80,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 
 /* Mobile ergonomics */
 @media (max-width: 520px){
+  #intro{justify-content:flex-start}
   #hud{height:38px;padding:0 10px}
   #hud .hud-left{gap:10px}
   .egg-dot{width:8px;height:10px}
@@ -119,6 +122,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
     Pro sdílené statistiky se může ukládat jen jeho <strong>otisk (hash)</strong>.
   </div>
   <button id="start-btn">Začít hledání</button>
+  <button class="link-btn" id="lb-page-btn">🏆 Výsledková listina</button>
   <div class="lb-preview" id="lb-preview"></div>
 </div>
 <div id="game">
@@ -165,6 +169,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
     </div>
   </div>
   <div class="leaderboard"><div class="lb-title">Výsledková listina</div><div id="lb-rows"></div></div>
+  <button class="link-btn" id="lb-page-btn-end" style="margin-top:10px">Otevřít celou výsledkovou listinu</button>
   <button id="play-again">Hrát znovu 🐣</button>
 </div>
 
@@ -2647,6 +2652,8 @@ document.getElementById('start-btn').addEventListener('click',async()=>{const n=
   buildDots();renderScene(0);startTimer();
 });
 document.getElementById('name-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('start-btn').click();});
+document.getElementById('lb-page-btn').addEventListener('click',()=>window.open('leaderboard.html','_blank','noopener,noreferrer'));
+document.getElementById('lb-page-btn-end').addEventListener('click',()=>window.open('leaderboard.html','_blank','noopener,noreferrer'));
 async function endGame(){
   clearInterval(timerInterval);
   const elapsed=Date.now()-startTime;

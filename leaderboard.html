@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Výsledková listina – Velikonoční lov vajíček</title>
+    <style>
+      :root { --cream:#fdf8f0; --green:#3a7d44; --gold:#c9922a; --dark:#1a1a2e; --border:#e0d4bc; }
+      body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--cream); color:var(--dark);}
+      .wrap{max-width:920px; margin:0 auto; padding:22px 14px 60px;}
+      h1{margin:0 0 6px; font-size:1.5rem;}
+      .sub{margin:0 0 16px; color:#666; line-height:1.4;}
+      .bar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:14px 0 12px;}
+      .btn{border:1px solid var(--border); background:#fff; border-radius:999px; padding:10px 14px; cursor:pointer; font-weight:700; color:#333;}
+      .btn.primary{background:var(--green); border-color:var(--green); color:#fff;}
+      .card{background:#fff; border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow:0 6px 22px #0001;}
+      .stats{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;}
+      .stat{min-width:120px;}
+      .stat b{display:block; font-size:1.35rem; color:var(--green);}
+      .stat span{color:#666; font-size:.9rem;}
+      table{width:100%; border-collapse:separate; border-spacing:0 8px;}
+      th{font-size:.75rem; letter-spacing:.12em; text-transform:uppercase; color:#888; text-align:left; padding:0 10px;}
+      td{background:#fff; border:1px solid #eee; padding:10px; vertical-align:middle;}
+      tr td:first-child{border-radius:12px 0 0 12px;}
+      tr td:last-child{border-radius:0 12px 12px 0;}
+      .rank{font-weight:900; color:var(--gold); width:70px;}
+      .nick{font-weight:800;}
+      .muted{color:#888; font-size:.9rem;}
+      .err{margin-top:12px; color:#b03030; font-weight:700;}
+      .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;}
+      @media (max-width: 520px){
+        .rank{width:52px}
+        td,th{padding-left:8px;padding-right:8px}
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Výsledková listina</h1>
+      <p class="sub">Školní žebříček ze sdíleného úložiště (Supabase). Zobrazuje se pouze nick.</p>
+
+      <div class="bar">
+        <button class="btn primary" id="btn-refresh">Obnovit</button>
+        <a class="btn" href="index.html">Zpět do hry</a>
+      </div>
+
+      <div class="card">
+        <div class="stats">
+          <div class="stat"><b id="st-plays">–</b><span>her</span></div>
+          <div class="stat"><b id="st-unique">–</b><span>nicků</span></div>
+          <div class="stat"><b id="st-avg">–</b><span>průměr</span></div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nick</th>
+              <th>Vajíčka</th>
+              <th>Čas</th>
+              <th>Datum</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+
+        <div class="err" id="err" style="display:none"></div>
+      </div>
+    </div>
+
+    <script src="config.js?v=20260331_3"></script>
+    <script>
+      const SUPABASE_URL = (window.__VAJICKA_CONFIG__ && window.__VAJICKA_CONFIG__.SUPABASE_URL) || '';
+      const SUPABASE_ANON_KEY = (window.__VAJICKA_CONFIG__ && window.__VAJICKA_CONFIG__.SUPABASE_ANON_KEY) || '';
+      const remoteEnabled = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+      function formatTime(ms){
+        const s=Math.floor(ms/1000);
+        return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+      }
+      function fmtDate(ts){
+        try{ return new Date(Number(ts)).toLocaleString('cs-CZ'); }catch(e){ return String(ts||''); }
+      }
+      async function sbFetch(path,{method='GET',body}={}){
+        const url=`${SUPABASE_URL}${path}`;
+        const headers={
+          'apikey':SUPABASE_ANON_KEY,
+          'Authorization':`Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type':'application/json',
+          'Prefer':'return=representation'
+        };
+        const res=await fetch(url,{method,headers,body:body?JSON.stringify(body):undefined});
+        if(!res.ok){
+          const txt=await res.text().catch(()=>String(res.status));
+          throw new Error(`Supabase ${res.status}: ${txt}`);
+        }
+        return await res.json();
+      }
+
+      async function loadTop(limit=50){
+        return await sbFetch(`/rest/v1/rpc/get_vajicka_leaderboard`,{method:'POST',body:{limit_n:limit}});
+      }
+      async function loadStats(){
+        const st=await sbFetch(`/rest/v1/rpc/get_vajicka_stats`,{method:'POST',body:{limit_n:5000}});
+        return st && st[0] ? st[0] : null;
+      }
+
+      const elRows=document.getElementById('rows');
+      const elErr=document.getElementById('err');
+
+      function setErr(msg){
+        elErr.style.display=msg?'block':'none';
+        elErr.textContent=msg||'';
+      }
+
+      async function refresh(){
+        setErr('');
+        if(!remoteEnabled){
+          setErr('Supabase není nastavený. Zkontroluj config.js.');
+          return;
+        }
+        const [top,st]=await Promise.all([loadTop(50),loadStats()]);
+        document.getElementById('st-plays').textContent=st?String(st.plays):'–';
+        document.getElementById('st-unique').textContent=st?String(st.unique_nicks):'–';
+        document.getElementById('st-avg').textContent=st&&st.avg_ms!=null?formatTime(st.avg_ms):'–';
+
+        elRows.innerHTML='';
+        top.forEach((r,i)=>{
+          const tr=document.createElement('tr');
+          tr.innerHTML = `
+            <td class="rank">${i+1}</td>
+            <td class="nick">${r.nick||''}</td>
+            <td>${r.eggs}</td>
+            <td class="mono">${formatTime(r.ms||0)}</td>
+            <td class="muted">${fmtDate(r.ts)}</td>
+          `;
+          elRows.appendChild(tr);
+        });
+      }
+
+      document.getElementById('btn-refresh').addEventListener('click',()=>refresh().catch(e=>setErr(String(e.message||e))));
+      refresh().catch(e=>setErr(String(e.message||e)));
+    </script>
+  </body>
+</html>
+
