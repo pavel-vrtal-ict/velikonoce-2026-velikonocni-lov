@@ -68,6 +68,19 @@
           </ol>
         </div>
       </div>
+
+      <div class="card" style="margin-top:14px">
+        <h2 style="margin:0 0 6px;font-size:1.1rem">Reset žebříčku</h2>
+        <div class="hint">
+          Z bezpečnostních důvodů reset nejde dělat jedním kliknutím přímo z webu (mohl by to zneužít kdokoliv s odkazem).
+          Níže si zkopíruj SQL a spusť ho v Supabase → <strong>SQL Editor</strong>.
+        </div>
+        <div class="out sql" id="out-reset">delete from public.vajicka_scores;</div>
+        <div class="row">
+          <button class="ghost" id="btn-copy-reset">Zkopírovat reset SQL</button>
+        </div>
+        <div class="hint"><span class="warn">Pozor:</span> nevratně smaže všechny školní výsledky.</div>
+      </div>
     </div>
 
     <script>
@@ -134,6 +147,19 @@
           elStatus.innerHTML = `<span class="warn">Kopírování se nepovedlo.</span> Označ a zkopíruj ručně.`;
         }
       });
+
+      const btnCopyReset = document.getElementById('btn-copy-reset');
+      const outReset = document.getElementById('out-reset');
+      if (btnCopyReset && outReset) {
+        btnCopyReset.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(outReset.textContent);
+            elStatus.innerHTML = `<span class="ok">Reset SQL zkopírováno.</span>`;
+          } catch (e) {
+            elStatus.innerHTML = `<span class="warn">Kopírování se nepovedlo.</span> Označ a zkopíruj ručně.`;
+          }
+        });
+      }
     </script>
   </body>
 </html>

@@ -30,7 +30,7 @@ create policy "scores_insert_anon"
 on public.vajicka_scores
 for insert
 to anon
-with check (true);
+with check (false);
 
 -- Policy: deny direct select on base table for anon (protect email_hash)
 drop policy if exists "scores_select_anon" on public.vajicka_scores;
@@ -80,4 +80,47 @@ $$;
 
 grant execute on function public.get_vajicka_leaderboard(int) to anon;
 grant execute on function public.get_vajicka_stats(int) to anon;
+
+-- Submit score with server-side enforcement:
+-- - max 3 submissions per email_hash
+create or replace function public.submit_vajicka_score(
+  nick text,
+  eggs int,
+  ms int,
+  ts bigint,
+  email_hash text
+)
+returns table (id uuid)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  existing_count int;
+  new_id uuid;
+begin
+  if nick is null or length(trim(nick))=0 then
+    raise exception 'nick_required';
+  end if;
+  if email_hash is null or length(trim(email_hash))=0 then
+    raise exception 'email_hash_required';
+  end if;
+
+  select count(*) into existing_count
+  from public.vajicka_scores
+  where public.vajicka_scores.email_hash = submit_vajicka_score.email_hash;
+
+  if existing_count >= 3 then
+    raise exception 'email_limit_reached';
+  end if;
+
+  insert into public.vajicka_scores (nick, eggs, ms, ts, email_hash)
+  values (submit_vajicka_score.nick, submit_vajicka_score.eggs, submit_vajicka_score.ms, submit_vajicka_score.ts, submit_vajicka_score.email_hash)
+  returning public.vajicka_scores.id into new_id;
+
+  return query select new_id;
+end;
+$$;
+
+grant execute on function public.submit_vajicka_score(text,int,int,bigint,text) to anon;
 

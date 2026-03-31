@@ -32,6 +32,10 @@ Pro sdílené statistiky (celá škola dohromady) je potřeba jednoduché úlož
 - Otevři `admin.html` na GitHub Pages a spočítej hash e‑mailu.
 - V Supabase (Table Editor) filtruj tabulku `vajicka_scores` podle `email_hash`.
 
+### Limity
+
+- Max. **3 spuštění na jeden školní e‑mail** (kontroluje se na backendu).
+
 ### Nastavení Supabase (stručně)
 
 1. V Supabase vytvoř projekt.

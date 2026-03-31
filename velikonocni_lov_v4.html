@@ -120,6 +120,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
   <div class="small-note">
     E‑mail se <strong>nezobrazuje</strong> ve výsledkové listině. Slouží pouze pro dohledání, kdo je za přezdívkou.
     Pro sdílené statistiky se může ukládat jen jeho <strong>otisk (hash)</strong>.
+    <br><strong>Limit:</strong> max. 3 spuštění na jeden školní e‑mail.
   </div>
   <button id="start-btn">Začít hledání</button>
   <button class="link-btn" id="lb-page-btn">🏆 Výsledková listina</button>
@@ -2558,7 +2559,13 @@ async function loadScoresRemote(limit=50){
 
 async function saveScoreRemote(entry){
   if(!remoteEnabled) return null;
-  const rows=await sbFetch(`/rest/v1/${SUPABASE_TABLE}`,{method:'POST',body:[entry]});
+  const rows=await sbFetch(`/rest/v1/rpc/submit_vajicka_score`,{method:'POST',body:{
+    nick: entry.nick,
+    eggs: entry.eggs,
+    ms: entry.ms,
+    ts: entry.ts,
+    email_hash: entry.email_hash
+  }});
   return rows && rows[0] ? rows[0] : null;
 }
 
@@ -2669,7 +2676,14 @@ async function endGame(){
     try{
       const created=await saveScoreRemote({nick:playerName,eggs:totalFound,ms:elapsed,ts,email_hash:playerEmailHash||null});
       remoteId=created && created.id ? created.id : null;
-    }catch(e){}
+    }catch(e){
+      // If limit reached, continue locally but show a clear message.
+      try{
+        if(String(e && e.message || '').includes('email_limit_reached')){
+          document.getElementById('end-sub').textContent='Limit 3 her na jeden e‑mail byl vyčerpán (výsledek už se do školního žebříčku neuložil).';
+        }
+      }catch(_e){}
+    }
   }
 
   // Choose leaderboard source
