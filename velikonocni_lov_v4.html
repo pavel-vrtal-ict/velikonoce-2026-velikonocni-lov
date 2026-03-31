@@ -20,6 +20,8 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 .small-note{font-size:.78rem;color:#777;line-height:1.35;text-align:center;max-width:520px;padding:0 20px;margin-top:10px}
 #email-input{font-family:'Lato',sans-serif;font-size:1rem;border:1px solid #e0d4bc;background:#fff8;text-align:center;padding:10px 16px;width:320px;color:var(--dark);outline:none;border-radius:12px}
 #email-input::placeholder{color:#bbb}
+.field-error{font-size:.78rem;color:#b03030;margin-top:8px;min-height:1.1em}
+.field-error.hidden{visibility:hidden}
 #start-btn{font-family:'Lato',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.15em;text-transform:uppercase;background:var(--green);color:#fff;border:none;padding:14px 42px;border-radius:50px;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px #3a7d4433}
 #start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px #3a7d4455}
 .intro-deco{font-size:2.5rem;margin-bottom:20px;animation:float 3s ease-in-out infinite}
@@ -87,6 +89,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
   <div class="name-box" style="margin-top:6px">
     <label>E‑mail pro dohledání (nezobrazuje se)</label>
     <input id="email-input" type="email" placeholder="např. jmeno.prijmeni@szstrebic.cz" maxlength="64" autocomplete="email" inputmode="email"/>
+    <div class="field-error hidden" id="email-error">Zadej školní e‑mail ve tvaru <strong>@szstrebic.cz</strong>.</div>
   </div>
   <div class="small-note">
     E‑mail se <strong>nezobrazuje</strong> ve výsledkové listině. Slouží pouze pro dohledání, kdo je za přezdívkou.
@@ -2485,6 +2488,10 @@ try{scores=JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)||'[]');}catch(e){s
 function saveScores(){try{localStorage.setItem(LOCAL_STORAGE_KEY,JSON.stringify(scores));}catch(e){}}
 
 function normalizeEmail(s){return (s||'').trim().toLowerCase();}
+function isSchoolEmail(email){
+  const e=normalizeEmail(email);
+  return !!e && e.endsWith('@szstrebic.cz') && e.includes('@') && e.length<=64;
+}
 async function sha256Hex(str){
   const data=new TextEncoder().encode(str);
   const digest=await crypto.subtle.digest('SHA-256',data);
@@ -2583,7 +2590,13 @@ document.getElementById('hint-btn').addEventListener('click',()=>{hintActive=!hi
 function startTimer(){startTime=Date.now();timerInterval=setInterval(()=>{document.getElementById('hud-timer').textContent=formatTime(Date.now()-startTime);},1000);}
 document.getElementById('start-btn').addEventListener('click',async()=>{const n=document.getElementById('name-input').value.trim();if(!n){document.getElementById('name-input').focus();return;}
   const email=document.getElementById('email-input').value.trim();
-  if(!email || !email.includes('@')){document.getElementById('email-input').focus();return;}
+  const emailErr=document.getElementById('email-error');
+  if(!isSchoolEmail(email)){
+    emailErr.classList.remove('hidden');
+    document.getElementById('email-input').focus();
+    return;
+  }
+  emailErr.classList.add('hidden');
   playerName=n;
   playerEmailHash='';
   try{playerEmailHash=await sha256Hex(normalizeEmail(email));}catch(e){playerEmailHash='';}
