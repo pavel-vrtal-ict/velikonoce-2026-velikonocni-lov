@@ -78,13 +78,13 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 
 /* Mobile ergonomics */
 @media (max-width: 520px){
-  #hud{height:44px;padding:0 12px}
+  #hud{height:38px;padding:0 10px}
   #hud .hud-left{gap:10px}
   .egg-dot{width:8px;height:10px}
-  #hud-count{font-size:.8rem}
-  #hud-scene-name{font-size:.9rem;max-width:34vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #hud-timer{font-size:1rem}
-  #scene-wrap{top:44px}
+  #hud-count{font-size:.78rem}
+  #hud-scene-name{font-size:.85rem;max-width:36vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #hud-timer{font-size:.95rem}
+  #scene-wrap{top:38px}
   #hint-btn{bottom:14px;right:14px;padding:9px 16px}
 }
 
@@ -94,11 +94,9 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 #rotate-hint .rh-ico{font-size:2.2rem;margin-bottom:8px}
 #rotate-hint .rh-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--green);margin-bottom:6px}
 #rotate-hint .rh-sub{color:#666;line-height:1.45;font-size:.95rem;margin-bottom:14px}
-#rotate-hint .rh-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-#rotate-hint .rh-btn{border:1px solid #e0d4bc;background:#fff;border-radius:999px;padding:10px 16px;cursor:pointer;font-weight:700;color:#555}
-#rotate-hint .rh-btn.primary{background:var(--green);border-color:var(--green);color:#fff}
 @media (max-width: 900px) and (orientation: portrait){
-  #game:not([data-rotate-dismissed="1"]) #rotate-hint{display:flex}
+  /* On portrait we must block: some eggs are off-screen */
+  #game #rotate-hint{display:flex}
 }
 </style>
 </head>
@@ -128,10 +126,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
     <div class="rh-card">
       <div class="rh-ico">📱↔️</div>
       <div class="rh-title">Otoč telefon na šířku</div>
-      <div class="rh-sub">Na šířku je scéna větší a vajíčka se hledají příjemněji. Můžeš pokračovat i na výšku.</div>
-      <div class="rh-actions">
-        <button class="rh-btn primary" id="rh-gotit">Pokračovat</button>
-      </div>
+      <div class="rh-sub">Na výšku není vidět celá scéna (některá vajíčka mohou být mimo obraz). Otoč prosím telefon na šířku.</div>
     </div>
   </div>
   <div id="hud">
@@ -2711,21 +2706,6 @@ async function showLbPreview(){
 }
 showLbPreview();
 refreshStats();
-
-// Allow dismissing the rotate hint (session-only)
-try{
-  const gameEl=document.getElementById('game');
-  const rh=document.getElementById('rotate-hint');
-  const rhBtn=document.getElementById('rh-gotit');
-  if(sessionStorage.getItem('rotate_hint_dismissed')==='1') gameEl.dataset.rotateDismissed='1';
-  if(rhBtn){
-    rhBtn.addEventListener('click',()=>{
-      sessionStorage.setItem('rotate_hint_dismissed','1');
-      gameEl.dataset.rotateDismissed='1';
-      if(rh) rh.style.display='none';
-    });
-  }
-}catch(e){}
 </script>
 </body>
 </html>
