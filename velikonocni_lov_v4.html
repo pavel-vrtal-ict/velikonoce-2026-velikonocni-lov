@@ -75,6 +75,31 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 .lb-award{font-size:1.1rem;margin-left:6px}
 #play-again{margin-top:28px;font-family:'Lato',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.15em;text-transform:uppercase;background:var(--green);color:#fff;border:none;padding:13px 38px;border-radius:50px;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px #3a7d4433}
 #play-again:hover{transform:translateY(-2px)}
+
+/* Mobile ergonomics */
+@media (max-width: 520px){
+  #hud{height:44px;padding:0 12px}
+  #hud .hud-left{gap:10px}
+  .egg-dot{width:8px;height:10px}
+  #hud-count{font-size:.8rem}
+  #hud-scene-name{font-size:.9rem;max-width:34vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #hud-timer{font-size:1rem}
+  #scene-wrap{top:44px}
+  #hint-btn{bottom:14px;right:14px;padding:9px 16px}
+}
+
+/* Portrait hint overlay for phones */
+#rotate-hint{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:26px;background:rgba(253,248,240,0.92);backdrop-filter:blur(8px);z-index:500}
+#rotate-hint .rh-card{background:#fff;border:1px solid #e0d4bc;border-radius:18px;max-width:420px;width:100%;padding:20px 18px;box-shadow:0 10px 40px #0002;text-align:center}
+#rotate-hint .rh-ico{font-size:2.2rem;margin-bottom:8px}
+#rotate-hint .rh-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--green);margin-bottom:6px}
+#rotate-hint .rh-sub{color:#666;line-height:1.45;font-size:.95rem;margin-bottom:14px}
+#rotate-hint .rh-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#rotate-hint .rh-btn{border:1px solid #e0d4bc;background:#fff;border-radius:999px;padding:10px 16px;cursor:pointer;font-weight:700;color:#555}
+#rotate-hint .rh-btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+@media (max-width: 900px) and (orientation: portrait){
+  #game:not([data-rotate-dismissed="1"]) #rotate-hint{display:flex}
+}
 </style>
 </head>
 <body>
@@ -99,6 +124,16 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
   <div class="lb-preview" id="lb-preview"></div>
 </div>
 <div id="game">
+  <div id="rotate-hint" aria-hidden="true">
+    <div class="rh-card">
+      <div class="rh-ico">📱↔️</div>
+      <div class="rh-title">Otoč telefon na šířku</div>
+      <div class="rh-sub">Na šířku je scéna větší a vajíčka se hledají příjemněji. Můžeš pokračovat i na výšku.</div>
+      <div class="rh-actions">
+        <button class="rh-btn primary" id="rh-gotit">Pokračovat</button>
+      </div>
+    </div>
+  </div>
   <div id="hud">
     <div class="hud-left"><div id="hud-progress"></div><span id="hud-count">0 / 12</span></div>
     <span id="hud-scene-name"></span>
@@ -2676,6 +2711,21 @@ async function showLbPreview(){
 }
 showLbPreview();
 refreshStats();
+
+// Allow dismissing the rotate hint (session-only)
+try{
+  const gameEl=document.getElementById('game');
+  const rh=document.getElementById('rotate-hint');
+  const rhBtn=document.getElementById('rh-gotit');
+  if(sessionStorage.getItem('rotate_hint_dismissed')==='1') gameEl.dataset.rotateDismissed='1';
+  if(rhBtn){
+    rhBtn.addEventListener('click',()=>{
+      sessionStorage.setItem('rotate_hint_dismissed','1');
+      gameEl.dataset.rotateDismissed='1';
+      if(rh) rh.style.display='none';
+    });
+  }
+}catch(e){}
 </script>
 </body>
 </html>
