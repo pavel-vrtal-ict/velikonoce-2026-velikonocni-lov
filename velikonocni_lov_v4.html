@@ -8,7 +8,7 @@
 <style>
 :root{--cream:#fdf8f0;--green:#3a7d44;--gold:#c9922a;--dark:#1a1a2e;--radius:16px}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);overflow:hidden;height:100vh;width:100vw}
+body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);overflow:hidden;height:100vh;height:100dvh;width:100vw}
 #intro{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#e8f5e0 0%,#fdf8f0 50%,#fde8cc 100%);z-index:200;gap:0}
 #intro h1{font-family:'Playfair Display',serif;font-size:clamp(2rem,5vw,3.5rem);color:var(--green);text-align:center;line-height:1.1;margin-bottom:10px}
 #intro h1 em{font-style:italic;color:var(--gold)}
@@ -33,7 +33,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 .lb-preview-row .lbr-name{flex:1}
 .lb-preview-row .lbr-eggs{color:var(--green);font-weight:700}
 .lb-preview-row .lbr-time{color:#999;font-size:.82rem}
-#game{position:fixed;inset:0;display:none}
+#game{position:fixed;inset:0;display:none;height:100dvh}
 #hud{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(253,248,240,0.92);backdrop-filter:blur(8px);border-bottom:1px solid #e0d4bc;z-index:100}
 #hud .hud-left{display:flex;gap:16px;align-items:center}
 #hud-progress{display:flex;gap:4px;align-items:center}
@@ -135,7 +135,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
     <span id="hud-timer">0:00</span>
   </div>
   <div id="scene-wrap">
-    <svg id="scene-canvas" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice"></svg>
+    <svg id="scene-canvas" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid meet"></svg>
   </div>
   <button id="hint-btn">💡 Nápověda</button>
 </div>
@@ -2591,10 +2591,21 @@ svg.appendChild(g);}
 function updateProximityGlow(clientX,clientY){
   if(!startTime)return;
   const sc=SCENES[currentScene];
-  const wrap=document.getElementById('scene-wrap');
-  const rect=wrap.getBoundingClientRect();
-  const sx=(clientX-rect.left)*(1200/rect.width);
-  const sy=(clientY-rect.top)*(700/rect.height);
+  const svg=document.getElementById('scene-canvas');
+  let sx,sy;
+  try{
+    const pt=svg.createSVGPoint();
+    pt.x=clientX; pt.y=clientY;
+    const m=svg.getScreenCTM();
+    if(!m) return;
+    const p=pt.matrixTransform(m.inverse());
+    sx=p.x; sy=p.y;
+  }catch(e){
+    const wrap=document.getElementById('scene-wrap');
+    const rect=wrap.getBoundingClientRect();
+    sx=(clientX-rect.left)*(1200/rect.width);
+    sy=(clientY-rect.top)*(700/rect.height);
+  }
   const dist=Math.sqrt((sx-sc.egg.x)**2+(sy-sc.egg.y)**2);
   const glow=document.getElementById('cursor-glow');
   glow.style.left=clientX+'px';
