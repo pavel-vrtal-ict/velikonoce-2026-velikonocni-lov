@@ -30,16 +30,7 @@ Pro sdílené statistiky (celá škola dohromady) je potřeba jednoduché úlož
 ### Nastavení Supabase (stručně)
 
 1. V Supabase vytvoř projekt.
-2. Vytvoř tabulku `vajicka_scores` se sloupci:
-   - `id` (uuid, default `gen_random_uuid()`, primary key)
-   - `nick` (text, not null)
-   - `eggs` (int, not null)
-   - `ms` (int, not null)
-   - `ts` (bigint, not null)
-   - `email_hash` (text, nullable)
-3. Povolit pro klienta:
-   - insert (aby šlo zapsat výsledek)
-   - select jen na veřejná pole (ideálně přes view bez `email_hash`)
-4. Do souboru `velikonocni_lov_v4.html` doplň:
+2. V SQL editoru spusť skript `supabase.sql` z tohoto repa (vytvoří tabulku, RLS a RPC funkce).
+3. V souboru `config.js` doplň:
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`

@@ -135,6 +135,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
   <button id="play-again">Hrát znovu 🐣</button>
 </div>
 
+<script src="config.js"></script>
 <script>
 // ─── SCENE BUILDER HELPERS ───────────────────────────────────
 function rain(count,op){let s='';for(let i=0;i<count;i++){const x=i*(1200/count)+Math.sin(i*3)*12;const y=150+Math.cos(i*2)*40;const l=80+Math.sin(i*1.3)*50;s+=`<line x1="${x}" y1="${y}" x2="${x-l*0.18}" y2="${y+l}" stroke="#9abccc" stroke-width="${.6+Math.sin(i)*.3}" opacity="${op}"/>`;}return s;}
@@ -2471,9 +2472,9 @@ ${Array.from({length:8},(_,i)=>{const x=340+i*42;const y=476+Math.sin(i*.7)*8;re
 
 // ─── ENGINE ────────────────────────────────────────────────────
 // Optional shared (school-wide) statistics/leaderboard via Supabase.
-// Leave empty to keep everything local (per device).
-const SUPABASE_URL = '';
-const SUPABASE_ANON_KEY = '';
+// Configure via config.js (window.__VAJICKA_CONFIG__).
+const SUPABASE_URL = (window.__VAJICKA_CONFIG__ && window.__VAJICKA_CONFIG__.SUPABASE_URL) || '';
+const SUPABASE_ANON_KEY = (window.__VAJICKA_CONFIG__ && window.__VAJICKA_CONFIG__.SUPABASE_ANON_KEY) || '';
 const SUPABASE_TABLE = 'vajicka_scores';
 
 const LOCAL_STORAGE_KEY = 'vajicka_v6_local';
@@ -2508,8 +2509,9 @@ async function sbFetch(path,{method='GET',body}={}){
 
 async function loadScoresRemote(limit=50){
   if(!remoteEnabled) return [];
-  const qs=`?select=id,nick,eggs,ms,ts&order=eggs.desc,ms.asc&limit=${limit}`;
-  return await sbFetch(`/rest/v1/${SUPABASE_TABLE}${qs}`);
+  // Use SECURITY DEFINER function (see supabase.sql) to avoid exposing email_hash.
+  const rows = await sbFetch(`/rest/v1/rpc/get_vajicka_leaderboard`,{method:'POST',body:{limit_n:limit}});
+  return rows;
 }
 
 async function saveScoreRemote(entry){
@@ -2527,12 +2529,9 @@ function setStats({plays,unique,avgMs}){
 async function refreshStats(){
   try{
     if(remoteEnabled){
-      // lightweight aggregate via top-N sample; good enough for school fun use
-      const all=await loadScoresRemote(1000);
-      const plays=all.length;
-      const unique=new Set(all.map(s=>String(s.nick||'').trim()).filter(Boolean)).size;
-      const avgMs=plays?Math.round(all.reduce((a,b)=>a+(b.ms||0),0)/plays):null;
-      setStats({plays,unique,avgMs});
+      const st = await sbFetch(`/rest/v1/rpc/get_vajicka_stats`,{method:'POST',body:{limit_n:5000}});
+      const row = st && st[0] ? st[0] : null;
+      setStats({plays: row?row.plays:null, unique: row?row.unique_nicks:null, avgMs: row?row.avg_ms:null});
       return;
     }
   }catch(e){}
