@@ -1,0 +1,2500 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velikonoční lov vajíček 🐣 v4</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#fdf8f0;--green:#3a7d44;--gold:#c9922a;--dark:#1a1a2e;--radius:16px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);overflow:hidden;height:100vh;width:100vw}
+#intro{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#e8f5e0 0%,#fdf8f0 50%,#fde8cc 100%);z-index:200;gap:0}
+#intro h1{font-family:'Playfair Display',serif;font-size:clamp(2rem,5vw,3.5rem);color:var(--green);text-align:center;line-height:1.1;margin-bottom:10px}
+#intro h1 em{font-style:italic;color:var(--gold)}
+#intro .sub{font-size:1rem;color:#666;margin-bottom:28px;letter-spacing:.05em;text-align:center;line-height:1.6;max-width:440px;padding:0 20px}
+#intro .name-box{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:24px}
+#intro label{font-size:.8rem;letter-spacing:.12em;color:#888;text-transform:uppercase}
+#name-input{font-family:'Playfair Display',serif;font-size:1.3rem;border:none;border-bottom:2px solid var(--gold);background:transparent;text-align:center;padding:8px 20px;width:260px;color:var(--dark);outline:none}
+#name-input::placeholder{color:#ccc}
+#start-btn{font-family:'Lato',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.15em;text-transform:uppercase;background:var(--green);color:#fff;border:none;padding:14px 42px;border-radius:50px;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px #3a7d4433}
+#start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px #3a7d4455}
+.intro-deco{font-size:2.5rem;margin-bottom:20px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.lb-preview{margin-top:28px;width:100%;max-width:420px;padding:0 20px}
+.lb-preview-title{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:8px;text-align:center}
+.lb-preview-row{display:flex;align-items:center;gap:10px;padding:7px 14px;border-radius:10px;background:#fff8;margin-bottom:4px;font-size:.9rem}
+.lb-preview-row .lbr-rank{min-width:26px;font-weight:700;color:var(--gold)}
+.lb-preview-row .lbr-name{flex:1}
+.lb-preview-row .lbr-eggs{color:var(--green);font-weight:700}
+.lb-preview-row .lbr-time{color:#999;font-size:.82rem}
+#game{position:fixed;inset:0;display:none}
+#hud{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(253,248,240,0.92);backdrop-filter:blur(8px);border-bottom:1px solid #e0d4bc;z-index:100}
+#hud .hud-left{display:flex;gap:16px;align-items:center}
+#hud-progress{display:flex;gap:4px;align-items:center}
+.egg-dot{width:10px;height:13px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#ddd;transition:background .3s,transform .3s}
+.egg-dot.found{background:var(--green);transform:scale(1.15)}
+#hud-scene-name{font-family:'Playfair Display',serif;font-size:1rem;color:#666;font-style:italic}
+#hud-timer{font-variant-numeric:tabular-nums;font-size:1.1rem;font-weight:700;color:var(--dark);letter-spacing:.05em}
+#hud-count{font-size:.9rem;color:#888;font-weight:300}
+#scene-wrap{position:fixed;top:56px;left:0;right:0;bottom:0;overflow:hidden;touch-action:none}
+#scene-canvas{width:100%;height:100%;display:block;touch-action:none}
+#find-toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);opacity:0;background:#fff;border-radius:50px;padding:10px 28px;box-shadow:0 4px 30px #0002;border:1px solid #e0d4bc;display:flex;align-items:center;gap:12px;z-index:150;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap}
+#find-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#find-toast .toast-emoji{font-size:1.6rem}
+#find-toast .toast-text{font-size:.9rem}
+#find-toast .toast-name{font-family:'Playfair Display',serif;font-weight:700;color:var(--green)}
+#hint-btn{position:fixed;bottom:20px;right:20px;background:#fff;border:1px solid #e0d4bc;border-radius:50px;padding:10px 22px;font-size:.8rem;letter-spacing:.08em;cursor:pointer;color:#888;z-index:100;transition:all .2s}
+#hint-btn:hover{color:var(--gold);border-color:var(--gold)}
+.particle{position:fixed;pointer-events:none;z-index:300;border-radius:50%;animation:particleFly .8s ease forwards}
+@keyframes particleFly{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+#cursor-glow{position:fixed;width:60px;height:60px;border-radius:50%;pointer-events:none;z-index:99;transition:background .15s;transform:translate(-50%,-50%);mix-blend-mode:multiply}
+#end-screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-start;background:linear-gradient(160deg,#e8f5e0 0%,#fdf8f0 60%,#fde8cc 100%);z-index:200;overflow-y:auto;padding:40px 20px 60px}
+#end-screen h2{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,4vw,2.8rem);color:var(--green);text-align:center;margin-bottom:6px}
+#end-screen .end-sub{font-size:.9rem;color:#888;margin-bottom:24px;text-align:center}
+.end-hero{font-size:3rem;margin-bottom:4px;animation:float 3s ease-in-out infinite}
+.my-result-card{background:#fff;border-radius:var(--radius);padding:20px 32px;box-shadow:0 4px 24px #0001;border:1px solid #e0d4bc;text-align:center;margin-bottom:28px;max-width:380px;width:100%}
+.my-result-card .result-name{font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:8px}
+.my-result-card .result-stats{display:flex;gap:24px;justify-content:center;font-size:.95rem;color:#666}
+.my-result-card .stat{display:flex;flex-direction:column;align-items:center;gap:2px}
+.my-result-card .stat strong{font-size:1.6rem;color:var(--green);font-weight:700}
+.my-result-card .result-rank{margin-top:12px;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.leaderboard{width:100%;max-width:480px;margin-top:8px}
+.lb-title{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:#aaa;margin-bottom:12px;text-align:center}
+.lb-row{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#fff;border-radius:12px;margin-bottom:6px;border:1px solid #e8e0d0}
+.lb-row.me{border-color:var(--gold);background:#fffbf3}
+.lb-rank{min-width:30px;font-weight:700;font-size:1rem;color:var(--gold)}
+.lb-name{flex:1;font-size:.95rem}
+.lb-eggs{font-size:.88rem;color:var(--green);font-weight:700}
+.lb-time{font-size:.82rem;color:#aaa;margin-left:auto}
+.lb-award{font-size:1.1rem;margin-left:6px}
+#play-again{margin-top:28px;font-family:'Lato',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.15em;text-transform:uppercase;background:var(--green);color:#fff;border:none;padding:13px 38px;border-radius:50px;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px #3a7d4433}
+#play-again:hover{transform:translateY(-2px)}
+</style>
+</head>
+<body>
+<div id="intro">
+  <div class="intro-deco">🐣</div>
+  <h1>Velikonoční<br><em>lov vajíček</em></h1>
+  <p class="sub">12 vajíček ukrytých ve 12 jedinečných světech.<br>Hledej pozorně — mnohá téměř splynou s prostředím.</p>
+  <div class="name-box"><label>Tvoje jméno</label><input id="name-input" type="text" placeholder="Napište jméno…" maxlength="22" autocomplete="off"/></div>
+  <button id="start-btn">Začít hledání</button>
+  <div class="lb-preview" id="lb-preview"></div>
+</div>
+<div id="game">
+  <div id="hud">
+    <div class="hud-left"><div id="hud-progress"></div><span id="hud-count">0 / 12</span></div>
+    <span id="hud-scene-name"></span>
+    <span id="hud-timer">0:00</span>
+  </div>
+  <div id="scene-wrap">
+    <svg id="scene-canvas" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice"></svg>
+  </div>
+  <button id="hint-btn">💡 Nápověda</button>
+</div>
+<div id="find-toast">
+  <span class="toast-emoji" id="toast-emoji"></span>
+  <div class="toast-text"><span id="toast-num"></span> &nbsp;<span class="toast-name" id="toast-name"></span><span id="toast-msg"></span></div>
+</div>
+<div id="cursor-glow"></div>
+<div id="end-screen">
+  <div class="end-hero" id="end-hero">🏆</div>
+  <h2 id="end-h2"></h2>
+  <p class="end-sub" id="end-sub"></p>
+  <div class="my-result-card">
+    <div class="result-name" id="res-name"></div>
+    <div class="result-stats"><div class="stat"><strong id="res-eggs"></strong><span>vajíček</span></div><div class="stat"><strong id="res-time"></strong><span>čas</span></div></div>
+    <div class="result-rank" id="res-rank"></div>
+  </div>
+  <div class="leaderboard"><div class="lb-title">Výsledková listina</div><div id="lb-rows"></div></div>
+  <button id="play-again">Hrát znovu 🐣</button>
+</div>
+
+<script>
+// ─── SCENE BUILDER HELPERS ───────────────────────────────────
+function rain(count,op){let s='';for(let i=0;i<count;i++){const x=i*(1200/count)+Math.sin(i*3)*12;const y=150+Math.cos(i*2)*40;const l=80+Math.sin(i*1.3)*50;s+=`<line x1="${x}" y1="${y}" x2="${x-l*0.18}" y2="${y+l}" stroke="#9abccc" stroke-width="${.6+Math.sin(i)*.3}" opacity="${op}"/>`;}return s;}
+function stars(count){let s='';for(let i=0;i<count;i++){const x=(i*97+13)%1200;const y=(i*61+7)%380;const r=i%12===0?2.2:i%5===0?1.4:.7;const op=.4+((i*37)%100)/180;s+=`<circle cx="${x}" cy="${y}" r="${r}" opacity="${op.toFixed(2)}"/>`;}return s;}
+function grassTufts(count,yBase,col,op){let s='';for(let i=0;i<count;i++){const x=i*(1200/count)+Math.sin(i*2.1)*8;const h=12+Math.sin(i*3)*8;s+=`<path d="M${x},${yBase} Q${x+2},${yBase-h} ${x+4},${yBase}" fill="${col}" opacity="${op}"/><path d="M${x+4},${yBase} Q${x+7},${yBase-h-4} ${x+9},${yBase}" fill="${col}" opacity="${op}"/>`;}return s;}
+function clouds(defs){return defs.map(([cx,cy,rx,ry,col,op])=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${col}" opacity="${op}"/>`).join('');}
+function pines(items){return items.map(({x,y,tiers,col1,col2,col3,tw,trunkW})=>{let s=`<rect x="${x-trunkW/2}" y="${y-tiers*22}" width="${trunkW}" height="${tiers*22+10}" fill="#3a2810"/>`;for(let t=0;t<tiers;t++){const w=tw+t*18;const ty=y-(tiers-t)*22;s+=`<polygon points="${x},${ty-22} ${x-w},${ty} ${x+w},${ty}" fill="${t===0?col1:t===1?col2:col3}"/>`;}return s;}).join('');}
+function brickWall(x,y,w,h,brickH,col,mortarCol){
+  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${col}"/>`;
+  const brickW=40;
+  for(let row=0;row*brickH<h;row++){
+    const offset=row%2===0?0:brickW/2;
+    for(let col2=0;col2<w/brickW+1;col2++){
+      const bx=x+col2*brickW-offset;
+      s+=`<rect x="${bx+1}" y="${y+row*brickH+1}" width="${brickW-2}" height="${brickH-2}" fill="${col}" rx="1"/>`;
+      s+=`<line x1="${bx+1}" y1="${y+row*brickH}" x2="${bx+brickW-1}" y2="${y+row*brickH}" stroke="${mortarCol}" stroke-width=".7" opacity=".5"/>`;
+    }
+    s+=`<line x1="${x}" y1="${y+row*brickH}" x2="${x+w}" y2="${y+row*brickH}" stroke="${mortarCol}" stroke-width=".7" opacity=".4"/>`;
+  }
+  return s;
+}
+
+// ─── SCENES ───────────────────────────────────────────────────
+const SCENES=[
+
+// ══ 1 · LOUKA ZA DEŠTIVÉHO RÁNA ══════════════════════════════
+{name:"Louka za deštivého rána",svg:`
+<defs>
+  <linearGradient id="g1sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5a7488"/><stop offset="45%" stop-color="#7a98b0"/><stop offset="100%" stop-color="#a8c0cc"/></linearGradient>
+  <linearGradient id="g1gr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4a7838"/><stop offset="100%" stop-color="#2c5020"/></linearGradient>
+  <linearGradient id="g1mud" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#587050"/><stop offset="100%" stop-color="#384830"/></linearGradient>
+  <radialGradient id="g1sun" cx="32%" cy="38%"><stop offset="0%" stop-color="#c8c090" stop-opacity=".35"/><stop offset="100%" stop-color="#c8c090" stop-opacity="0"/></radialGradient>
+  <radialGradient id="g1pudA" cx="40%" cy="35%"><stop offset="0%" stop-color="#8ab0c0" stop-opacity=".88"/><stop offset="100%" stop-color="#60909c" stop-opacity=".65"/></radialGradient>
+  <radialGradient id="g1pudB" cx="50%" cy="30%"><stop offset="0%" stop-color="#8ab0c0" stop-opacity=".75"/><stop offset="100%" stop-color="#60909c" stop-opacity=".5"/></radialGradient>
+  <filter id="f1blur"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<rect width="1200" height="700" fill="url(#g1sky)"/>
+<!-- Weak sun glow behind cloud bank -->
+<ellipse cx="380" cy="148" rx="200" ry="100" fill="url(#g1sun)"/>
+<!-- Dark storm cloud layers — 20+ ellipses for density -->
+<ellipse cx="80"  cy="90"  rx="190" ry="78" fill="#506070" opacity=".98"/>
+<ellipse cx="240" cy="72"  rx="220" ry="88" fill="#586880" opacity=".95"/>
+<ellipse cx="170" cy="115" rx="180" ry="65" fill="#485870" opacity=".9"/>
+<ellipse cx="420" cy="82"  rx="240" ry="92" fill="#526075" opacity=".96"/>
+<ellipse cx="580" cy="62"  rx="260" ry="98" fill="#4e6075" opacity=".93"/>
+<ellipse cx="500" cy="118" rx="200" ry="60" fill="#607888" opacity=".7"/>
+<ellipse cx="740" cy="88"  rx="235" ry="87" fill="#586078" opacity=".94"/>
+<ellipse cx="880" cy="68"  rx="250" ry="95" fill="#526070" opacity=".95"/>
+<ellipse cx="810" cy="128" rx="190" ry="58" fill="#607888" opacity=".65"/>
+<ellipse cx="1060" cy="98" rx="220" ry="82" fill="#4e6072" opacity=".93"/>
+<ellipse cx="1150" cy="78" rx="180" ry="70" fill="#567080" opacity=".88"/>
+<ellipse cx="1100" cy="135" rx="160" ry="52" fill="#608090" opacity=".6"/>
+<!-- Lighter cloud bellies -->
+<ellipse cx="250" cy="158" rx="210" ry="45" fill="#80a0b0" opacity=".32"/>
+<ellipse cx="580" cy="152" rx="260" ry="48" fill="#7898a8" opacity=".28"/>
+<ellipse cx="900" cy="155" rx="250" ry="45" fill="#80a0b0" opacity=".3"/>
+<!-- Rain — 80 streaks, dense and angled -->
+<g stroke="#9abccc" opacity=".42">${Array.from({length:80},(_,i)=>{const x=i*15+Math.sin(i*2.3)*6;const y=155+Math.cos(i*1.7)*30;const l=60+Math.sin(i*3)*40;return`<line x1="${x}" y1="${y}" x2="${x-l*.2}" y2="${y+l}" stroke-width="${.5+Math.sin(i)*.3}"/>`;}).join('')}</g>
+<!-- Heavier foreground rain -->
+<g stroke="#7a9caa" opacity=".3">${Array.from({length:40},(_,i)=>{const x=i*30+10;return`<line x1="${x}" y1="250" x2="${x-22}" y2="420" stroke-width=".9"/>`;}).join('')}</g>
+<!-- Ground -->
+<rect y="398" width="1200" height="302" fill="url(#g1gr)"/>
+<!-- Muddy patches -->
+<ellipse cx="300" cy="415" rx="190" ry="42" fill="url(#g1mud)" opacity=".82"/>
+<ellipse cx="680" cy="428" rx="220" ry="38" fill="url(#g1mud)" opacity=".74"/>
+<ellipse cx="1040" cy="420" rx="175" ry="40" fill="url(#g1mud)" opacity=".78"/>
+<!-- Soil texture lines -->
+<g stroke="#3a4e2a" stroke-width="1" opacity=".3">${Array.from({length:20},(_,i)=>`<path d="M${i*62},${410+Math.sin(i)*8} Q${i*62+30},${406+Math.sin(i)*6} ${i*62+60},${410+Math.sin(i)*8}"/>`).join('')}</g>
+<!-- Main puddle -->
+<ellipse cx="490" cy="430" rx="155" ry="42" fill="url(#g1pudA)"/>
+<!-- Puddle ripple rings -->
+<ellipse cx="490" cy="430" rx="60"  ry="16" fill="none" stroke="#7aa8b8" stroke-width="1.2" opacity=".55"/>
+<ellipse cx="490" cy="430" rx="95"  ry="26" fill="none" stroke="#7aa8b8" stroke-width=".9"  opacity=".4"/>
+<ellipse cx="490" cy="430" rx="130" ry="36" fill="none" stroke="#7aa8b8" stroke-width=".6"  opacity=".28"/>
+<!-- Raindrop impacts in puddle -->
+${Array.from({length:8},(_,i)=>{const px=420+i*18;const py=422+Math.sin(i*1.3)*10;return`<circle cx="${px}" cy="${py}" r="${3+Math.sin(i)*2}" fill="none" stroke="#8ab8c8" stroke-width=".8" opacity=".6"/>`;}).join('')}
+<!-- Second puddle -->
+<ellipse cx="840" cy="438" rx="95" ry="26" fill="url(#g1pudB)"/>
+<ellipse cx="840" cy="438" rx="55" ry="15" fill="none" stroke="#7aa8b8" stroke-width="1" opacity=".45"/>
+<!-- Grass — 3 density layers -->
+<g fill="#3c6828" opacity=".8">${Array.from({length:60},(_,i)=>{const x=i*20+5;const h=14+Math.sin(i*2.3)*9;return`<path d="M${x},400 Q${x+2},${400-h} ${x+4},400"/>`;}).join('')}</g>
+<g fill="#4a7835" opacity=".7">${Array.from({length:40},(_,i)=>{const x=i*30+8;const h=20+Math.sin(i*1.7)*11;return`<path d="M${x},400 Q${x+3},${400-h} ${x+6},400"/><path d="M${x+6},400 Q${x+9},${400-h-4} ${x+12},400"/>`;}).join('')}</g>
+<!-- Tall grass clumps -->
+<g fill="#547c40">
+  ${[70,195,310,455,590,710,850,980,1110].map(x=>`<path d="M${x},395 Q${x+4},${350+Math.sin(x)%8*6} ${x+7},395"/><path d="M${x+7},395 Q${x+11},${345+Math.sin(x+1)%8*6} ${x+14},395"/><path d="M${x+14},395 Q${x+10},${355+Math.sin(x+2)%8*5} ${x+18},395"/>`).join('')}
+</g>
+<!-- Wild herbs and weeds -->
+${[130,280,420,650,800,960,1090].map((x,i)=>`
+<line x1="${x}" y1="400" x2="${x+Math.sin(i)*5}" y2="${368+Math.sin(i*1.3)*8}" stroke="#5a8840" stroke-width="1.6"/>
+<line x1="${x}" y1="${382}" x2="${x-12}" y2="${372}" stroke="#5a8840" stroke-width="1"/>
+<line x1="${x}" y1="${376}" x2="${x+14}" y2="${366}" stroke="#5a8840" stroke-width="1"/>
+`).join('')}
+<!-- Dandelions -->
+${[165,355,760,1050].map((x,i)=>`
+<line x1="${x}" y1="400" x2="${x}" y2="${368}" stroke="#4a7830" stroke-width="1.8"/>
+<circle cx="${x}" cy="${366}" r="${6+i%2}" fill="#d8c830" opacity=".78"/>
+${Array.from({length:10},(_,j)=>{const a=j*36*Math.PI/180;return`<line x1="${x}" y1="366" x2="${x+Math.cos(a)*9}" y2="${366+Math.sin(a)*9}" stroke="#e8d840" stroke-width=".8" opacity=".7"/>`;}).join('')}
+`).join('')}
+<!-- Wet stones on ground -->
+${[[260,462,28,12],[295,458,18,8],[870,472,30,13],[908,468,19,9],[640,476,16,7]].map(([x,y,rx,ry])=>`
+<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#6e808a" opacity=".72"/>
+<ellipse cx="${x-4}" cy="${y-3}" rx="${rx*.4}" ry="${ry*.4}" fill="#88a0a8" opacity=".4"/>
+`).join('')}
+<!-- Distant treeline (foggy) -->
+<g fill="#385028" opacity=".45">${Array.from({length:16},(_,i)=>{const x=i*80-20;const h=60+Math.sin(i*1.8)*25;return`<path d="M${x},398 Q${x+20},${398-h} Q${x+40},${398-h+15} ${x+80},398"/>`;}).join('')}</g>
+<!-- Power line with posts -->
+<line x1="0" y1="295" x2="1200" y2="282" stroke="#303038" stroke-width="1.5" opacity=".38"/>
+${[180,560,940].map(x=>`<line x1="${x}" y1="${288-(x-180)*.01}" x2="${x}" y2="${365}" stroke="#303038" stroke-width="3" opacity=".4"/><line x1="${x-18}" y1="${292-(x-180)*.01}" x2="${x+18}" y2="${292-(x-180)*.01}" stroke="#303038" stroke-width="2" opacity=".35"/>`).join('')}
+<!-- Distant farmhouse silhouette -->
+<rect x="1050" y="328" width="90" height="65" fill="#3a3a48" opacity=".28"/>
+<polygon points="1045,328 1095,298 1145,328" fill="#2a2a38" opacity=".28"/>
+<rect x="1068" y="342" width="18" height="22" fill="#5a7080" opacity=".2"/>
+<!-- Ground fog wisps -->
+<ellipse cx="600" cy="600" rx="640" ry="80" fill="#b8c8cc" opacity=".18"/>
+<ellipse cx="200" cy="580" rx="250" ry="50" fill="#c0d0d4" opacity=".14"/>
+<ellipse cx="1000" cy="575" rx="240" ry="55" fill="#b8c8cc" opacity=".16"/>
+
+<!-- Distant fence posts with wire -- >
+${[100,220,340,460,580,700,820,940,1060].map(x=>`<rect x="${x}" y="${300}" width="8" height="70" fill="#4a3828" opacity=".35"/><rect x="${x-2}" y="${297}" width="12" height="6" rx="2" fill="#3a2818" opacity=".32"/>`).join('')}
+<line x1="100" y1="310" x2="1100" y2="308" stroke="#5a4838" stroke-width="1.2" opacity=".25"/>
+<line x1="100" y1="325" x2="1100" y2="323" stroke="#5a4838" stroke-width="1.2" opacity=".2"/>
+<!-- Crow on power line -->
+<g transform="translate(445,285)" fill="#1a1a20" opacity=".7">
+  <ellipse cx="0" cy="8" rx="16" ry="9"/>
+  <ellipse cx="13" cy="2" rx="10" ry="7"/>
+  <circle cx="22" cy="-1" r="6"/>
+  <polygon points="27,1 36,3 27,5" fill="#303040"/>
+  <circle cx="25" cy="0" r="1.5" fill="#fff" opacity=".6"/>
+  <path d="M-14,16 Q-9,22 -4,20" fill="none" stroke="#1a1a20" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M-4,16 Q0,22 4,21" fill="none" stroke="#1a1a20" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+<!-- Snail on wet stone -->
+<g transform="translate(272,466)" opacity=".8">
+  <ellipse cx="0" cy="5" rx="11" ry="7" fill="#9a7848"/>
+  <path d="M0,0 Q-8,-18 0,-24 Q8,-28 12,-20 Q16,-10 8,-4 Q2,0 0,0" fill="#b89060"/>
+  <path d="M0,0 Q-5,-12 0,-18 Q5,-20 8,-14 Q10,-8 4,-4" fill="#c8a070" opacity=".55"/>
+  <line x1="-2" y1="-2" x2="-8" y2="-12" stroke="#9a7848" stroke-width="1" stroke-linecap="round"/>
+  <line x1="2" y1="-2" x2="0" y2="-13" stroke="#9a7848" stroke-width="1" stroke-linecap="round"/>
+  <circle cx="-8" cy="-13" r="1.5" fill="#3a2818"/>
+  <circle cx="0" cy="-14" r="1.5" fill="#3a2818"/>
+</g>
+<!-- Earthworm emerging from mud -->
+<path d="M735,478 Q742,462 738,452 Q734,442 740,436" fill="none" stroke="#c89060" stroke-width="5" stroke-linecap="round" opacity=".62"/>
+<!-- Small mushrooms in grass -->
+<g>
+  <ellipse cx="158" cy="397" rx="14" ry="7" fill="#c83820" opacity=".82"/>
+  <rect x="154" y="397" width="8" height="14" fill="#e8dcc0" rx="2"/>
+  <ellipse cx="920" cy="398" rx="11" ry="5.5" fill="#a82810" opacity=".78"/>
+  <rect x="917" y="398" width="6" height="11" fill="#e0d4b8" rx="2"/>
+</g>
+<!-- Raindrop ripple in second puddle -->
+${Array.from({length:4},(_,i)=>`<ellipse cx="${840}" cy="${438}" rx="${20+i*12}" ry="${5+i*3}" fill="none" stroke="#8ab8c8" stroke-width=".7" opacity="${.35-i*.07}"/>`).join('')}
+<!-- Mud tire tracks -->
+<path d="M0,462 Q200,458 400,462 Q600,466 800,462 Q1000,458 1200,462" fill="none" stroke="#3a4c2a" stroke-width="14" opacity=".22"/>
+<path d="M0,472 Q200,468 400,472 Q600,476 800,472 Q1000,468 1200,472" fill="none" stroke="#3a4c2a" stroke-width="14" opacity=".18"/>
+<!-- Ground puddle sheen lines -->
+<g stroke="#8ab0c0" stroke-width=".8" opacity=".25">${Array.from({length:8},(_,i)=>`<line x1="${380+i*16}" y1="${415}" x2="${340+i*20}" y2="${445}"/>`).join('')}</g>
+`,egg:{x:618,y:374,w:28,h:36,color:'#4a7030',stroke:'#3a5825',opacity:.38,pattern:'none'}},
+
+// ══ 2 · KVETOUCÍ ZAHRADA ══════════════════════════════════════
+{name:"Kvetoucí zahrada",svg:`
+<defs>
+  <linearGradient id="g2sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4eb0f0"/><stop offset="55%" stop-color="#90d0f5"/><stop offset="100%" stop-color="#caf0fc"/></linearGradient>
+  <linearGradient id="g2gr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#52b03c"/><stop offset="100%" stop-color="#389025"/></linearGradient>
+  <radialGradient id="g2sun"><stop offset="0%" stop-color="#fffaaa"/><stop offset="45%" stop-color="#ffe840" stop-opacity=".65"/><stop offset="100%" stop-color="#ffe840" stop-opacity="0"/></radialGradient>
+  <radialGradient id="g2bee" cx="50%" cy="40%"><stop offset="0%" stop-color="#fff8a0" stop-opacity=".6"/><stop offset="100%" stop-color="#fff8a0" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1200" height="700" fill="url(#g2sky)"/>
+<!-- Sun with full ray system -->
+<circle cx="1055" cy="88" r="110" fill="url(#g2sun)"/>
+<circle cx="1055" cy="88" r="54" fill="#ffee44" opacity=".97"/>
+<circle cx="1055" cy="88" r="44" fill="#fff8a0" opacity=".6"/>
+<g stroke="#ffe860" stroke-width="2.5" opacity=".5">${Array.from({length:16},(_,i)=>{const a=i*22.5*Math.PI/180;return`<line x1="${1055+62*Math.cos(a)}" y1="${88+62*Math.sin(a)}" x2="${1055+90*Math.cos(a)}" y2="${88+90*Math.sin(a)}"/>`;}).join('')}</g>
+<!-- Clouds — many stacked ellipses per cloud -->
+${[[180,98,135,50,250,90,290,82,155,42,310,115,85,30],[650,86,140,52,740,68,115,45,610,108,95,36,780,98,82,32],[1000,115,110,40,1080,100,90,36,950,130,80,30]].map((c,ci)=>{let s='';for(let i=0;i<c.length;i+=4)s+=`<ellipse cx="${c[i]}" cy="${c[i+1]}" rx="${c[i+2]}" ry="${c[i+3]}" fill="${ci===0?'#fff':ci===1?'#f8fcff':'#fff'}" opacity="${.88+ci*.03}"/>`;return s;}).join('')}
+<!-- Cloud shadow undersides -->
+<ellipse cx="210" cy="148" rx="130" ry="22" fill="#b8d8e8" opacity=".18"/>
+<ellipse cx="690" cy="135" rx="140" ry="24" fill="#b8d8e8" opacity=".15"/>
+<!-- Garden back wall — detailed stonework -->
+<rect x="0" y="268" width="1200" height="185" fill="#c0a880" opacity=".55"/>
+${Array.from({length:32},(_,i)=>`<rect x="${i*40-4}" y="270" width="36" height="20" rx="2" fill="#c8b088" opacity=".45"/>`).join('')}
+${Array.from({length:32},(_,i)=>`<rect x="${i*40+14}" y="290" width="36" height="20" rx="2" fill="#b8a078" opacity=".4"/>`).join('')}
+${Array.from({length:32},(_,i)=>`<rect x="${i*40-4}" y="310" width="36" height="20" rx="2" fill="#c0a880" opacity=".38"/>`).join('')}
+${Array.from({length:32},(_,i)=>`<rect x="${i*40+14}" y="330" width="36" height="20" rx="2" fill="#b8a078" opacity=".35"/>`).join('')}
+<!-- Climbing roses — left wall -->
+<path d="M0,455 Q60,380 100,290" fill="none" stroke="#306822" stroke-width="5"/>
+<path d="M0,455 Q40,400 80,340 Q95,315 100,290" fill="none" stroke="#3c8028" stroke-width="3"/>
+${Array.from({length:14},(_,i)=>{const t=i/13;const x=80*t+Math.sin(i*2)*22;const y=455-165*t+Math.cos(i*1.5)*12;const colors=['#e04060','#f06080','#c02040','#e84070','#d03060'];return`<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${5+Math.sin(i*2)*2}" fill="${colors[i%5]}" opacity=".88"/>
+<circle cx="${x.toFixed(0)+2}" cy="${y.toFixed(0)-3}" r="2" fill="#ff8090" opacity=".45"/>`;}).join('')}
+<!-- Climbing roses right -->
+<path d="M1200,445 Q1140,375 1100,295" fill="none" stroke="#306822" stroke-width="5"/>
+${Array.from({length:12},(_,i)=>{const t=i/11;const x=1200-100*t+Math.sin(i*2)*18;const y=445-150*t+Math.cos(i*1.4)*10;return`<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${4+Math.sin(i*2.5)*2}" fill="${i%2===0?'#e04060':'#f07090'}" opacity=".85"/>`;}).join('')}
+<!-- Wisteria draping from top right -->
+<g opacity=".8">${Array.from({length:8},(_,i)=>{const x=880+i*38;return`<path d="M${x},268 Q${x+8},${300+Math.sin(i)*15} ${x+4},${330+Math.sin(i)*20}" fill="none" stroke="#7a4ab0" stroke-width="3" stroke-linecap="round"/>
+<ellipse cx="${x+4}" cy="${334+Math.sin(i)*20}" rx="6" ry="12" fill="#8850c0" opacity=".78"/>`;}).join('')}</g>
+<!-- GROUND -->
+<rect y="452" width="1200" height="248" fill="url(#g2gr)"/>
+<!-- Stone path -->
+<rect x="530" y="452" width="140" height="248" fill="#b8a078" opacity=".72"/>
+${Array.from({length:8},(_,i)=>`<ellipse cx="${600}" cy="${472+i*28}" rx="${48+Math.sin(i)*8}" ry="${10}" fill="#a89068" opacity=".5" transform="rotate(${Math.sin(i)*4},600,${472+i*28})"/>`).join('')}
+<!-- Ground grass density -->
+<g fill="#42a030" opacity=".6">${Array.from({length:55},(_,i)=>{const x=i*22+5;const h=16+Math.sin(i*2.1)*9;return`<path d="M${x},455 Q${x+2},${455-h} ${x+4},455"/>`;}).join('')}</g>
+<!-- LEFT FLOWER BED — raised with edging -->
+<rect x="25" y="392" width="468" height="112" fill="#52882c" rx="8" opacity=".72"/>
+<rect x="25" y="388" width="468" height="14" fill="#689840" rx="5" opacity=".65"/>
+<!-- Bed edging bricks -->
+${Array.from({length:12},(_,i)=>`<rect x="${28+i*38}" y="488" width="34" height="18" fill="#c8a060" rx="3" opacity=".7"/>`).join('')}
+<!-- TULIPS — 10 with full petal detail -->
+${Array.from({length:10},(_,i)=>{const x=55+i*43;const h=48+Math.sin(i*1.8)*18;const lean=Math.sin(i*1.4)*6;const colors=['#d82020','#d87020','#d82060','#b020a0','#d82020','#e86020','#c020a0','#d82020','#e03030','#d07020'];const c=colors[i];return`
+<path d="M${x},452 Q${x+lean*.5},${452-h*.4} ${x+lean},${452-h}" stroke="#2a7018" stroke-width="2.8" fill="none"/>
+<line x1="${x}" y1="${452-h*.45}" x2="${x-18}" y2="${452-h*.45-8}" stroke="#2a7018" stroke-width="1.8"/>
+<ellipse cx="${x-24}" cy="${452-h*.45-10}" rx="14" ry="7" fill="#3a8820" transform="rotate(-15,${x-24},${452-h*.45-10})"/>
+<path d="M${x+lean-12},${452-h+8} Q${x+lean},${452-h-20} ${x+lean+12},${452-h+8} Q${x+lean+8},${452-h+22} ${x+lean-8},${452-h+22}Z" fill="${c}" opacity=".9"/>
+<path d="M${x+lean-8},${452-h+6} Q${x+lean},${452-h-16} ${x+lean+8},${452-h+6} Q${x+lean+4},${452-h+18} ${x+lean-4},${452-h+18}Z" fill="${c}" opacity=".45"/>
+`;}).join('')}
+<!-- DAFFODILS -->
+${Array.from({length:5},(_,i)=>{const x=72+i*88;return`
+<line x1="${x}" y1="450" x2="${x}" y2="${406}" stroke="#3a7c22" stroke-width="2.5"/>
+<circle cx="${x}" cy="${402}" r="11" fill="#fff8b0" opacity=".94"/>
+<circle cx="${x}" cy="${402}" r="6"  fill="#f0a800"/>
+${Array.from({length:8},(_,j)=>{const a=j*45*Math.PI/180;return`<ellipse cx="${x+Math.cos(a)*13}" cy="${402+Math.sin(a)*13}" rx="5" ry="9" fill="#fff8b0" opacity=".8" transform="rotate(${j*45},${x+Math.cos(a)*13},${402+Math.sin(a)*13})"/>`;}).join('')}
+`;}).join('')}
+<!-- RIGHT BED — hyacinths -->
+<rect x="707" y="388" width="468" height="116" fill="#52882c" rx="8" opacity=".72"/>
+<rect x="707" y="384" width="468" height="14" fill="#689840" rx="5" opacity=".65"/>
+${Array.from({length:12},(_,i)=>`<rect x="${710+i*38}" y="492" width="34" height="18" fill="#c8a060" rx="3" opacity=".7"/>`).join('')}
+<!-- Hyacinths -->
+${Array.from({length:9},(_,i)=>{const x=735+i*52;const colors=['#7030c0','#9040d0','#5820a8','#8838c8','#6628b0','#a048d8','#6030b0','#9040d0','#7030c0'];const c=colors[i];return`
+<line x1="${x}" y1="452" x2="${x}" y2="392" stroke="#2a7018" stroke-width="3"/>
+<ellipse cx="${x}" cy="${382}" rx="11" ry="30" fill="${c}" opacity=".85"/>
+${Array.from({length:7},(_,j)=>`<circle cx="${x+Math.cos(j*52*Math.PI/180)*13}" cy="${396-j*5}" r="4.5" fill="${c}" opacity=".75" stroke="#fff" stroke-width=".5"/>`).join('')}
+`;}).join('')}
+<!-- BUTTERFLIES — 4 detailed -->
+${[[490,300,-12],[780,265,15],[340,280,-8],[900,310,10]].map(([x,y,rot],i)=>{const wingColors=[['#f07040','#ff9060'],['#c040b0','#e060c8'],['#4090e0','#60b0f0'],['#50c040','#70e060']];const [wc,wc2]=wingColors[i];return`
+<g transform="translate(${x},${y}) rotate(${rot})">
+  <ellipse cx="-15" cy="0" rx="22" ry="13" fill="${wc}" opacity=".82"/>
+  <ellipse cx="-11" cy="5" rx="13" ry="8"  fill="${wc2}" opacity=".5"/>
+  <ellipse cx="15"  cy="0" rx="22" ry="13" fill="${wc}" opacity=".82"/>
+  <ellipse cx="11"  cy="5" rx="13" ry="8"  fill="${wc2}" opacity=".5"/>
+  <!-- Wing veins -->
+  <g stroke="${wc}" stroke-width=".8" opacity=".5">
+    <line x1="-2" y1="-2" x2="-26" y2="-4"/>
+    <line x1="-2" y1="2"  x2="-20" y2="10"/>
+    <line x1="-2" y1="-2" x2="26"  y2="-4"/>
+    <line x1="-2" y1="2"  x2="20"  y2="10"/>
+  </g>
+  <line x1="-2" y1="-9" x2="-2" y2="9" stroke="#3a2818" stroke-width="2"/>
+  <line x1="-2" y1="-9" x2="-8" y2="-20" stroke="#3a2818" stroke-width="1.2"/>
+  <line x1="-2" y1="-9" x2="4"  y2="-20" stroke="#3a2818" stroke-width="1.2"/>
+  <circle cx="-8" cy="-21" r="1.5" fill="#3a2818"/>
+  <circle cx="4"  cy="-21" r="1.5" fill="#3a2818"/>
+</g>`;}).join('')}
+
+<!-- Garden stone path EXTRAS — moss between stones -->
+${Array.from({length:8},(_,i)=>`<ellipse cx="${600}" cy="${472+i*28}" rx="${14+Math.sin(i)*3}" ry="${5}" fill="#3a7822" opacity=".28"/>`).join('')}
+<!-- Garden gnome -->
+<g transform="translate(688,445)">
+  <!-- Body -->
+  <ellipse cx="0" cy="18" rx="14" ry="18" fill="#c03028"/>
+  <!-- Belt -->
+  <rect x="-14" y="20" width="28" height="6" fill="#4a3818" opacity=".8"/>
+  <rect x="-2" y="20" width="4" height="6" fill="#c89028"/>
+  <!-- Head -->
+  <circle cx="0" cy="-4" r="12" fill="#e8b888"/>
+  <!-- Long beard -->
+  <path d="M-10,4 Q-14,22 -8,30 Q0,36 8,30 Q14,22 10,4" fill="#f0f0f0" opacity=".92"/>
+  <path d="M-8,6 Q-11,18 -6,26 Q0,32 6,26 Q11,18 8,6" fill="#fff" opacity=".6"/>
+  <!-- Hat -->
+  <polygon points="0,-30 -16,0 16,0" fill="#c03028"/>
+  <ellipse cx="0" cy="0" rx="20" ry="7" fill="#a02020"/>
+  <!-- Eyes -->
+  <circle cx="-5" cy="-6" r="2.5" fill="#2a1808"/>
+  <circle cx="5" cy="-6" r="2.5" fill="#2a1808"/>
+  <!-- Nose -->
+  <ellipse cx="0" cy="-1" rx="3" ry="2.5" fill="#d08868"/>
+  <!-- Fishing rod -->
+  <line x1="14" y1="14" x2="38" y2="-8" stroke="#8a6030" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="38" y1="-8" x2="42" y2="28" stroke="#8a7050" stroke-width=".9" stroke-dasharray="3,2" opacity=".6"/>
+  <!-- Legs/boots -->
+  <rect x="-8" y="34" width="8" height="12" fill="#3a2818" rx="2"/>
+  <rect x="2" y="34" width="8" height="12" fill="#3a2818" rx="2"/>
+</g>
+<!-- Bird bath with birds -->
+<g transform="translate(190,415)">
+  <!-- Pedestal -->
+  <rect x="-7" y="20" width="14" height="48" fill="#c0b098" rx="3"/>
+  <ellipse cx="0" cy="68" rx="22" ry="10" fill="#b0a088"/>
+  <!-- Basin -->
+  <ellipse cx="0" cy="18" rx="38" ry="14" fill="#c8c0b0"/>
+  <ellipse cx="0" cy="16" rx="32" ry="10" fill="#6898b8" opacity=".72"/>
+  <!-- Water ripple -->
+  <ellipse cx="0" cy="16" rx="14" ry="5" fill="none" stroke="#7ab0c8" stroke-width="1" opacity=".5"/>
+  <!-- Bird 1 on rim -->
+  <g transform="translate(-28,14)">
+    <ellipse cx="0" cy="4" rx="10" ry="6" fill="#6070a0"/>
+    <circle cx="8" cy="0" r="5.5" fill="#7080b0"/>
+    <polygon points="13,1 20,3 13,5" fill="#e08030"/>
+    <circle cx="12" cy="0" r="1.5" fill="#0a0a18"/>
+  </g>
+  <!-- Bird 2 on rim, drinking -->
+  <g transform="translate(20,12) rotate(25)">
+    <ellipse cx="0" cy="4" rx="8" ry="5.5" fill="#6878a8"/>
+    <circle cx="7" cy="0" r="5" fill="#7888b8"/>
+    <polygon points="12,-2 20,-4 12,0" fill="#e09038"/>
+  </g>
+</g>
+<!-- Spider web on garden wall corner -->
+<g stroke="#d8d0c0" stroke-width=".7" opacity=".45">
+  <!-- Web center at 1170,280 -->
+  ${Array.from({length:8},(_,i)=>{const a=i*45*Math.PI/180;return`<line x1="1170" y1="280" x2="${1170+Math.cos(a)*52}" y2="${280+Math.sin(a)*52}"/>`;}).join('')}
+  <!-- Concentric rings -->
+  ${Array.from({length:4},(_,i)=>{const r=12+i*12;return`<path d="${Array.from({length:9},(_,j)=>{const a0=j*45*Math.PI/180;const a1=(j+1)*45*Math.PI/180;return`${j===0?'M':'L'}${1170+Math.cos(a0)*r},${280+Math.sin(a0)*r}`;}).join(' ')} Z"/>`;}).join('')}
+</g>
+<!-- Spider -->
+<circle cx="1170" cy="280" r="3.5" fill="#3a2818" opacity=".55"/>
+<!-- Ant trail -->
+<path d="M348,500 Q400,490 440,498 Q480,506 520,500" fill="none" stroke="#3a2018" stroke-width=".5" stroke-dasharray="2,3" opacity=".4"/>
+${Array.from({length:8},(_,i)=>{const t=i/7;const x=348+t*172;const y=500-Math.sin(t*Math.PI)*10;const rot=(i%2===0)?15:-10;return`<ellipse cx="${x}" cy="${y}" rx="2.5" ry="1.5" fill="#2a1808" opacity=".55" transform="rotate(${rot},${x},${y})"/>`;}).join('')}
+<!-- Honeybee hive hanging from tree (stylized) -->
+<g transform="translate(415,268)" opacity=".72">
+  <path d="M0,-4 Q18,-18 22,0 Q18,22 0,28 Q-18,22 -22,0 Q-18,-18 0,-4" fill="#d4a020"/>
+  <path d="M0,-4 Q14,-14 18,0 Q14,18 0,22 Q-14,18 -18,0 Q-14,-14 0,-4" fill="#e8b830" opacity=".7"/>
+  <!-- Hive stripes -->
+  ${Array.from({length:5},(_,i)=>`<path d="M${-20+i*2},${i*5-10} Q0,${i*5-12} ${20-i*2},${i*5-10}" fill="none" stroke="#b88818" stroke-width="1.5" opacity=".45"/>`).join('')}
+  <!-- Entry hole -->
+  <ellipse cx="0" cy="22" rx="5" ry="3.5" fill="#2a1808"/>
+  <!-- Hanging string -->
+  <line x1="0" y1="-4" x2="0" y2="-22" stroke="#8a6830" stroke-width="1.5"/>
+</g>
+<!-- BUMBLEBEE -->
+<g transform="translate(618,355)">
+  <ellipse cx="0" cy="0" rx="12" ry="9" fill="#f0c000"/>
+  <rect x="-10" y="-4" width="7" height="8" fill="#1a1a1a" rx="1"/>
+  <rect x="-2"  y="-4" width="7" height="8" fill="#f0c000" rx="1"/>
+  <rect x="6"   y="-4" width="7" height="8" fill="#1a1a1a" rx="1"/>
+  <ellipse cx="-6" cy="-8" rx="10" ry="6" fill="#c8e8f8" opacity=".7" transform="rotate(-25,-6,-8)"/>
+  <ellipse cx="6"  cy="-8" rx="10" ry="6" fill="#c8e8f8" opacity=".7" transform="rotate(25,6,-8)"/>
+  <circle cx="10" cy="-2" r="3" fill="#d0a000"/>
+  <circle cx="11" cy="-3" r="1" fill="#1a1a1a"/>
+</g>
+<!-- WATERING CAN with water arc -->
+<g transform="translate(496,450) rotate(-14)">
+  <rect x="-20" y="-30" width="40" height="30" fill="#6a8898" rx="5"/>
+  <ellipse cx="0" cy="-30" rx="20" ry="7" fill="#7a98a8"/>
+  <line x1="20" y1="-22" x2="52" y2="-30" stroke="#6a8898" stroke-width="6" stroke-linecap="round"/>
+  <line x1="52" y1="-30" x2="52" y2="-10" stroke="#6a8898" stroke-width="2"/>
+  <!-- Spout holes -->
+  ${Array.from({length:5},(_,i)=>`<circle cx="${50+i*2}" cy="-8" r="1" fill="#4a6878"/>`).join('')}
+  <!-- Water arc -->
+  <path d="M52,-8 Q70,10 55,35 Q50,45 45,50" fill="none" stroke="#6ab0d8" stroke-width="1.5" stroke-dasharray="4,3" opacity=".6"/>
+  <path d="M52,-8 Q68,14 52,38 Q47,48 41,52" fill="none" stroke="#6ab0d8" stroke-width="1" stroke-dasharray="3,3" opacity=".4"/>
+  <!-- Handle -->
+  <path d="-22,-28 Q-35,-18 -32,0" fill="none" stroke="#6a8898" stroke-width="4" stroke-linecap="round"/>
+</g>
+`,egg:{x:72,y:408,w:28,h:36,color:'#52a038',stroke:'#38742a',opacity:.35,pattern:'dots'}},
+
+// ══ 3 · PŘÍSTAV PŘI ZÁPADU SLUNCE ════════════════════════════
+{name:"Přístav při západu slunce",svg:`
+<defs>
+  <linearGradient id="g3sky" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%"   stop-color="#18284e"/>
+    <stop offset="22%"  stop-color="#703898"/>
+    <stop offset="48%"  stop-color="#d84820"/>
+    <stop offset="72%"  stop-color="#e87818"/>
+    <stop offset="100%" stop-color="#f8b830"/>
+  </linearGradient>
+  <linearGradient id="g3sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#183c58"/><stop offset="100%" stop-color="#0c2238"/></linearGradient>
+  <radialGradient id="g3sunhalo" cx="50%" cy="50%"><stop offset="0%" stop-color="#f8b830" stop-opacity=".55"/><stop offset="100%" stop-color="#f8b830" stop-opacity="0"/></radialGradient>
+  <linearGradient id="g3dock" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9a7648"/><stop offset="100%" stop-color="#6a4822"/></linearGradient>
+  <filter id="g3glow"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="1200" height="700" fill="url(#g3sky)"/>
+<!-- Sun — large, bright, near horizon -->
+<circle cx="600" cy="375" r="130" fill="url(#g3sunhalo)"/>
+<circle cx="600" cy="375" r="62"  fill="#f8c838" opacity=".97"/>
+<circle cx="600" cy="375" r="50"  fill="#fae050" opacity=".88"/>
+<circle cx="600" cy="375" r="38"  fill="#fff8b0" opacity=".55"/>
+<!-- Sun glint on water — long vertical column -->
+<polygon points="558,380 642,380 720,700 480,700" fill="#f8a030" opacity=".16"/>
+<polygon points="575,380 625,380 660,700 540,700" fill="#f8c040" opacity=".12"/>
+<!-- Horizon glow band -->
+<rect x="0" y="360" width="1200" height="30" fill="#f8a820" opacity=".15"/>
+<!-- Upper dark clouds (silhouetted) -->
+<ellipse cx="280"  cy="88"  rx="210" ry="55" fill="#200c38" opacity=".65"/>
+<ellipse cx="160"  cy="108" rx="175" ry="48" fill="#180828" opacity=".6"/>
+<ellipse cx="350"  cy="110" rx="150" ry="40" fill="#221040" opacity=".55"/>
+<ellipse cx="880"  cy="72"  rx="230" ry="60" fill="#200c38" opacity=".68"/>
+<ellipse cx="1030" cy="94"  rx="195" ry="52" fill="#18082e" opacity=".62"/>
+<ellipse cx="1140" cy="115" rx="150" ry="44" fill="#201038" opacity=".55"/>
+<!-- Mid orange/pink clouds -->
+<ellipse cx="145"  cy="248" rx="175" ry="44" fill="#c03818" opacity=".52"/>
+<ellipse cx="90"   cy="270" rx="140" ry="36" fill="#b02e10" opacity=".45"/>
+<ellipse cx="280"  cy="238" rx="135" ry="40" fill="#d04020" opacity=".48"/>
+<ellipse cx="960"  cy="235" rx="190" ry="46" fill="#b83010" opacity=".52"/>
+<ellipse cx="1080" cy="255" rx="150" ry="40" fill="#d04020" opacity=".46"/>
+<ellipse cx="1165" cy="240" rx="120" ry="36" fill="#c83818" opacity=".48"/>
+<!-- Pink wispy streaks -->
+<path d="M0,195 Q300,175 600,188 Q900,200 1200,182" fill="none" stroke="#d06050" stroke-width="4" opacity=".25"/>
+<path d="M0,218 Q400,200 800,212 Q1000,218 1200,205" fill="none" stroke="#c05040" stroke-width="3" opacity=".2"/>
+<!-- SEA -->
+<rect y="405" width="1200" height="295" fill="url(#g3sea)"/>
+<!-- Wave system — 15 layers -->
+${Array.from({length:15},(_,i)=>{const y=418+i*18;const amp=6-i*.3;return`<path d="M0,${y} ${Array.from({length:8},(_,j)=>`Q${j*150+75},${y-amp} ${(j+1)*150},${y}`).join(' ')}" fill="none" stroke="#2a7898" stroke-width="${1.2-i*.05}" opacity="${.3-i*.012}"/>`;}).join('')}
+<!-- Sun shimmer streaks on water -->
+${Array.from({length:12},(_,i)=>`<line x1="${580+i*4}" y1="410" x2="${540+i*8}" y2="700" stroke="#f8c040" stroke-width="${1.5-i*.1}" opacity="${.08-i*.005}"/>`).join('')}
+<!-- DOCK — detailed timber -->
+<rect x="315" y="372" width="570" height="40" fill="url(#g3dock)"/>
+<!-- Plank grains -->
+${Array.from({length:32},(_,i)=>`<line x1="${335+i*17}" y1="372" x2="${335+i*17}" y2="412" stroke="#5a3012" stroke-width=".8" opacity=".4"/>`).join('')}
+<!-- Dock edge -->
+<rect x="315" y="410" width="570" height="7" fill="#3c2208" opacity=".6"/>
+<!-- Dock bolts -->
+${Array.from({length:8},(_,i)=>`<circle cx="${348+i*72}" cy="${391}" r="4" fill="#7a5030" stroke="#5a3810" stroke-width="1"/>`).join('')}
+<!-- Dock posts with barnacles -->
+${[[348,370,110],[560,370,88],[780,370,95]].map(([x,y,h])=>`
+<rect x="${x-8}" y="${y}" width="16" height="${h}" fill="#4a2a08"/>
+<g fill="#6a5040" opacity=".6">${Array.from({length:6},(_,i)=>`<ellipse cx="${x-4+i*2}" cy="${y+h*.3+i*6}" rx="3" ry="2"/>`).join('')}</g>
+`).join('')}
+<!-- Mooring ropes with sag -->
+<path d="M356,382 Q388,428 422,448" fill="none" stroke="#a07848" stroke-width="3.5" stroke-linecap="round"/>
+<path d="M788,386 Q820,432 855,452" fill="none" stroke="#a07848" stroke-width="3.5" stroke-linecap="round"/>
+<!-- Mooring rings -->
+<circle cx="356" cy="380" r="6" fill="#8a6840" stroke="#5a4020" stroke-width="1.5"/>
+<circle cx="790" cy="384" r="6" fill="#8a6840" stroke="#5a4020" stroke-width="1.5"/>
+<!-- FISHING BOAT (left, red hull) — detailed -->
+<path d="M42,398 Q185,376 318,398 L305,450 L55,450 Z" fill="#b82828"/>
+<!-- Hull planks -->
+${Array.from({length:6},(_,i)=>`<path d="M${55+i*5},450 Q${185},${440-i*5} ${305-i*5},450" fill="none" stroke="#982020" stroke-width="1" opacity=".5"/>`).join('')}
+<!-- Hull stripe -->
+<path d="M42,410 Q185,390 318,410" fill="none" stroke="#f0e0a0" stroke-width="3" opacity=".7"/>
+<!-- Cabin -->
+<rect x="145" y="360" width="80" height="38" fill="#c8b888" rx="3"/>
+<rect x="148" y="362" width="35" height="22" fill="#5880a0" opacity=".8" rx="2"/>
+<rect x="188" y="362" width="35" height="22" fill="#4070A0" opacity=".8" rx="2"/>
+<!-- Mast with rigging -->
+<rect x="182" y="308" width="8"  height="90" fill="#8a5828"/>
+<line x1="186" y1="308" x2="140" y2="378" stroke="#8a7050" stroke-width="1.5" opacity=".6"/>
+<line x1="186" y1="308" x2="232" y2="378" stroke="#8a7050" stroke-width="1.5" opacity=".6"/>
+<!-- Sail (furled) -->
+<path d="M186,308 L235,326 L186,358 Z" fill="#f4e8c8" opacity=".88"/>
+<!-- Portholes -->
+${[160,210,255].map(x=>`<circle cx="${x}" cy="${420}" r="7" fill="#284050" stroke="#8a6840" stroke-width="1.5"/><circle cx="${x}" cy="${420}" r="3.5" fill="#3a6080" opacity=".5"/>`).join('')}
+<!-- Flags -->
+<line x1="186" y1="308" x2="186" y2="295" stroke="#8a5828" stroke-width="2"/>
+<path d="M186,295 L208,301 L186,308" fill="#e03030" opacity=".8"/>
+<!-- SAILING YACHT (right, white) — detailed -->
+<path d="M885,393 Q1015,374 1148,393 L1135,445 L898,445 Z" fill="#e8e0d8"/>
+${Array.from({length:5},(_,i)=>`<path d="M${898+i*4},445 Q${1015},${436-i*4} ${1135-i*4},445" fill="none" stroke="#c8c0b0" stroke-width="1" opacity=".4"/>`).join('')}
+<path d="M885,408 Q1015,390 1148,408" fill="none" stroke="#4060a0" stroke-width="3" opacity=".7"/>
+<rect x="1005" y="318" width="8" height="76" fill="#7a5828"/>
+<path d="M1009,318 L1068,340 L1009,372 Z" fill="#f8f0e0" opacity=".92"/>
+<path d="M1009,318 L948,355 L1009,373 Z" fill="#e8e0d0" opacity=".78"/>
+<!-- Boom -->
+<line x1="1009" y1="374" x2="1090" y2="388" stroke="#8a6030" stroke-width="4" stroke-linecap="round"/>
+<!-- Rigging lines -->
+<line x1="1009" y1="318" x2="885"  y2="398" stroke="#a09060" stroke-width="1.2" opacity=".5"/>
+<line x1="1009" y1="318" x2="1148" y2="398" stroke="#a09060" stroke-width="1.2" opacity=".5"/>
+<!-- LIGHTHOUSE — full detail -->
+<rect x="78" y="152" width="52" height="242" fill="#ece8dc"/>
+<!-- Stone texture -->
+${Array.from({length:13},(_,i)=>`<line x1="78" y1="${172+i*18}" x2="130" y2="${172+i*18}" stroke="#c8c4b0" stroke-width=".8" opacity=".5"/>`).join('')}
+<!-- Red bands -->
+<rect x="78" y="186" width="52" height="22" fill="#c02820" opacity=".82"/>
+<rect x="78" y="252" width="52" height="22" fill="#c02820" opacity=".82"/>
+<rect x="78" y="318" width="52" height="22" fill="#c02820" opacity=".82"/>
+<rect x="78" y="384" width="52" height="10" fill="#c02820" opacity=".82"/>
+<!-- Lighthouse cap -->
+<polygon points="104,138 68,160 140,160" fill="#c02820"/>
+<!-- Lamp housing -->
+<rect x="86" y="148" width="36" height="16" fill="#f8e868" opacity=".95"/>
+<circle cx="104" cy="156" r="10" fill="#fff8b0"/>
+<circle cx="104" cy="156" r="92" fill="#f8e868" opacity=".04" filter="url(#g3glow)"/>
+<!-- Light beam faint -->
+<path d="M104,156 L380,220 L380,260 Z" fill="#f8e868" opacity=".04"/>
+<!-- Windows -->
+${[198,264,330].map(y=>`<rect x="90" y="${y}" width="28" height="36" fill="#5a88a0" opacity=".82" rx="14 14 0 0"/>`).join('')}
+<rect x="90" y="270" width="28" height="36" fill="#f8e090" opacity=".6" rx="14 14 0 0"/>
+<!-- SEAGULLS — 12, varied sizes -->
+<g fill="none" stroke="#e0d8c8" stroke-width="1.8" stroke-linecap="round" opacity=".78">
+${[[310,188],[330,175],[355,190],[490,155],[518,142],[540,158],[660,172],[684,160],[720,145],[840,132],[1000,165],[1025,152]].map(([x,y])=>`<path d="M${x},${y} Q${x+10},${y-10} ${x+20},${y}"/>`).join('')}
+</g>
+<!-- Pelican silhouette -->
+<g fill="#303848" opacity=".7" transform="translate(380,220)">
+  <ellipse cx="0" cy="0" rx="20" ry="10"/>
+  <ellipse cx="18" cy="-4" rx="12" ry="7"/>
+  <ellipse cx="26" cy="-8" rx="8" ry="5"/>
+  <path d="M30,-5 L52,-8 L30,2 Z" fill="#303848"/>
+</g>
+<!-- Fishing nets on dock -->
+<g stroke="#8a7040" stroke-width="1" opacity=".48">
+${Array.from({length:10},(_,i)=>`<line x1="${620+i*10}" y1="372" x2="${605+i*10}" y2="415"/>`).join('')}
+${Array.from({length:5},(_,j)=>`<line x1="618" y1="${376+j*8}" x2="718" y2="${373+j*8}"/>`).join('')}
+</g>
+<!-- Buoy -->
+<ellipse cx="218" cy="438" rx="16" ry="22" fill="#c02820" opacity=".88"/>
+<ellipse cx="218" cy="432" rx="16" ry="6"  fill="#e03830" opacity=".55"/>
+<line x1="218" y1="416" x2="218" y2="390" stroke="#8a6030" stroke-width="3"/>
+
+<!-- Fish jumping from water -->
+<g transform="translate(340,418) rotate(-30)" opacity=".7">
+  <ellipse cx="0" cy="0" rx="22" ry="7" fill="#4890b8"/>
+  <polygon points="-22,-2 -32,-10 -32,10" fill="#3878a0"/>
+  <circle cx="18" cy="-2" r="3" fill="#1a3850"/>
+  <circle cx="19" cy="-3" r="1.2" fill="#fff" opacity=".7"/>
+</g>
+<!-- Splash rings from fish -->
+<ellipse cx="360" cy="432" rx="30" ry="8" fill="none" stroke="#6898b0" stroke-width="1.2" opacity=".45"/>
+<ellipse cx="360" cy="432" rx="18" ry="5" fill="none" stroke="#6898b0" stroke-width=".8" opacity=".35"/>
+<!-- Crab on dock -->
+<g transform="translate(720,404)" opacity=".8">
+  <ellipse cx="0" cy="0" rx="13" ry="8" fill="#d04820"/>
+  <ellipse cx="0" cy="0" rx="10" ry="6" fill="#e05030" opacity=".5"/>
+  <!-- Claws -->
+  <path d="M-13,0 Q-22,-6 -28,-2 Q-24,4 -18,2 Q-13,4 -13,0" fill="#c83a18"/>
+  <path d="M13,0 Q22,-6 28,-2 Q24,4 18,2 Q13,4 13,0" fill="#c83a18"/>
+  <!-- Legs -->
+  ${Array.from({length:4},(_,i)=>`<line x1="${-8+i*4}" y1="6" x2="${-14+i*8}" y2="18" stroke="#d04820" stroke-width="2"/>`).join('')}
+  ${Array.from({length:4},(_,i)=>`<line x1="${-8+i*4}" y1="-6" x2="${-14+i*8}" y2="-18" stroke="#d04820" stroke-width="2"/>`).join('')}
+  <!-- Eyes on stalks -->
+  <line x1="-5" y1="-7" x2="-7" y2="-14" stroke="#b03018" stroke-width="1.5"/>
+  <circle cx="-7" cy="-15" r="3" fill="#1a1a1a"/>
+  <line x1="5" y1="-7" x2="7" y2="-14" stroke="#b03018" stroke-width="1.5"/>
+  <circle cx="7" cy="-15" r="3" fill="#1a1a1a"/>
+</g>
+<!-- Anchor on dock -->
+<g transform="translate(640,390)" fill="#6a5030" opacity=".65">
+  <circle cx="0" cy="-8" r="8" fill="none" stroke="#6a5030" stroke-width="3"/>
+  <line x1="0" y1="0" x2="0" y2="28" stroke="#6a5030" stroke-width="4"/>
+  <line x1="-14" y1="28" x2="14" y2="28" stroke="#6a5030" stroke-width="4"/>
+  <path d="M-14,20 Q-18,28 -14,36" fill="none" stroke="#6a5030" stroke-width="3"/>
+  <path d="M14,20 Q18,28 14,36" fill="none" stroke="#6a5030" stroke-width="3"/>
+</g>
+<!-- Water barrel and rope coil on dock -->
+<rect x="348" y="374" width="28" height="36" fill="#7a5828" rx="4" opacity=".72"/>
+<g stroke="#6a4818" stroke-width="1.2" opacity=".45">${Array.from({length:5},(_,i)=>`<line x1="348" y1="${380+i*6}" x2="376" y2="${380+i*6}"/>`).join('')}</g>
+<ellipse cx="348" cy="374" rx="14" ry="5" fill="#906838" opacity=".7"/>
+<!-- Rope coil -->
+<g transform="translate(432,408)" fill="none" stroke="#9a7848" stroke-width="3.5" opacity=".55">
+  <circle cx="0" cy="0" r="14"/>
+  <circle cx="0" cy="0" r="8"/>
+  <circle cx="0" cy="0" r="3"/>
+</g>
+<!-- Floating debris/seaweed -->
+<path d="M175,450 Q195,442 205,452 Q215,462 235,452" fill="none" stroke="#2a7840" stroke-width="2.5" opacity=".35"/>
+<path d="M925,448 Q945,438 958,448 Q972,458 990,448" fill="none" stroke="#2a7840" stroke-width="2" opacity=".3"/>
+<!-- Sunset cloud reflections on water (extra shimmer) -->
+${Array.from({length:8},(_,i)=>`<line x1="${400+i*52}" y1="${455+i*12}" x2="${440+i*52}" y2="${460+i*12}" stroke="#c06020" stroke-width="2" opacity="${.08-i*.008}"/>`).join('')}
+<!-- Water reflections of boats -->
+<path d="M55,450 Q185,455 305,450 L318,475 L42,475 Z"    fill="#b02820" opacity=".15"/>
+<path d="M898,445 Q1015,450 1135,445 L1148,468 L885,468 Z" fill="#d0c8c0" opacity=".12"/>
+`,egg:{x:480,y:376,w:26,h:34,color:'#7a5832',stroke:'#5a3818',opacity:.40,pattern:'none'}},
+
+// ══ 4 · STARÉ MĚSTO ══════════════════════════════════════════
+{name:"Staré město",svg:`
+<defs>
+  <linearGradient id="g4sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b8c8e0"/><stop offset="100%" stop-color="#d8e8f4"/></linearGradient>
+  <linearGradient id="g4road" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#989080"/><stop offset="100%" stop-color="#787068"/></linearGradient>
+</defs>
+<rect width="1200" height="700" fill="url(#g4sky)"/>
+<!-- Distant spires & cathedral -->
+<g fill="#8890a0" opacity=".35">
+  <rect x="560" y="100" width="80" height="220"/><polygon points="600,60 555,105 645,105"/>
+  <rect x="570" y="65"  width="10" height="38"/><polygon points="575,55 570,65 580,65"/>
+  <rect x="700" y="130" width="60" height="180"/><polygon points="730,90 695,135 765,135"/>
+  <rect x="450" y="140" width="50" height="168"/><polygon points="475,105 445,145 505,145"/>
+</g>
+<!-- SKY HAZE layer -->
+<rect width="1200" height="700" fill="#e0e8f0" opacity=".1"/>
+<!-- ═══ BUILDING 1 — baroque left ═══ -->
+<rect x="0" y="55" width="215" height="665" fill="#c8b898"/>
+<!-- Rusticated stone base -->
+${Array.from({length:6},(_,i)=>`<rect x="0" y="${55+i*24}" width="215" height="22" fill="#c0b088" opacity="${.4+i*.02}" rx="1"/>`).join('')}
+<!-- Upper stories -->
+${Array.from({length:16},(_,i)=>`<line x1="0" y1="${200+i*30}" x2="215" y2="${200+i*30}" stroke="#b0a078" stroke-width=".8" opacity=".4"/>`).join('')}
+<!-- Ornate cornice -->
+<rect x="0" y="55" width="215" height="22" fill="#d8c8a8"/>
+${Array.from({length:11},(_,i)=>`<rect x="${i*22}" y="55" width="18" height="14" rx="9 9 0 0" fill="#c8b898"/>`).join('')}
+${Array.from({length:11},(_,i)=>`<rect x="${i*22+4}" y="55" width="10" height="20" rx="5 5 0 0" fill="#d0c0a0"/>`).join('')}
+<!-- Windows — 4 rows × 3 cols with detail -->
+${Array.from({length:4},(_,row)=>Array.from({length:3},(_,col)=>{
+  const x=18+col*68;const y=100+row*82;const lit=(row*3+col)%4===0;
+  return`<rect x="${x}" y="${y}" width="44" height="58" fill="${lit?'#ffe090':'#6888a0'}" opacity="${lit?.72:.78}" rx="22 22 0 0"/>
+  <rect x="${x+1}" y="${y+1}" width="42" height="56" fill="none" stroke="${lit?'#c8a020':'#587088'}" stroke-width="1.2" rx="21 21 0 0"/>
+  <line x1="${x+22}" y1="${y}" x2="${x+22}" y2="${y+58}" stroke="${lit?'#b89018':'#507080'}" stroke-width="1"/>
+  <line x1="${x}" y1="${y+30}" x2="${x+44}" y2="${y+30}" stroke="${lit?'#b89018':'#507080'}" stroke-width="1"/>
+  ${lit?`<ellipse cx="${x+12}" cy="${y+18}" rx="5" ry="7" fill="#ffe8a0" opacity=".3"/>`:''}`
+}).join('')).join('')}
+<!-- ═══ BUILDING 2 — gothic tower ═══ -->
+<rect x="193" y="22" width="175" height="698" fill="#b8a880"/>
+<g stroke="#a89868" stroke-width=".7" opacity=".4">${Array.from({length:22},(_,i)=>`<line x1="193" y1="${42+i*32}" x2="368" y2="${42+i*32}"/>`).join('')}</g>
+<!-- Quoins -->
+<g fill="#c8b888" opacity=".45">${Array.from({length:24},(_,i)=>`<rect x="193" y="${22+i*30}" width="24" height="18" rx="1"/><rect x="345" y="${22+i*30}" width="24" height="18" rx="1"/>`).join('')}</g>
+<!-- Spire -->
+<polygon points="280,-2 193,28 367,28" fill="#9a8860"/>
+<line x1="280" y1="-2" x2="280" y2="-26" stroke="#8a7850" stroke-width="4"/>
+<circle cx="280" cy="-28" r="7" fill="#c8a830"/>
+<!-- Gothic pointed windows -->
+${Array.from({length:5},(_,row)=>{const y=48+row*88;return`
+<path d="M236,${y} Q280,${y-26} ${324},${y} L324,${y+62} L236,${y+62} Z" fill="#5a7888" opacity=".82"/>
+<line x1="280" y1="${y-6}" x2="280" y2="${y+62}" stroke="#c0b098" stroke-width="1.5" opacity=".5"/>
+<line x1="236" y1="${y+34}" x2="324" y2="${y+34}" stroke="#c0b098" stroke-width="1.2" opacity=".4"/>
+<ellipse cx="${240}" cy="${y+16}" rx="6" ry="10" fill="#d0e8f0" opacity=".28"/>
+`;}).join('')}
+<!-- ═══ BUILDING 3 — merchant house ═══ -->
+<rect x="348" y="102" width="205" height="618" fill="#d0c0a0"/>
+<!-- Stepped gable top -->
+${[[348,102,34,22],[382,84,28,20],[410,68,26,18],[436,54,28,16],[464,68,26,18],[490,84,28,20],[518,102,34,22]].map(([x,y,w,h])=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#b0a075"/>`).join('')}
+<!-- Facade detail -->
+${Array.from({length:18},(_,i)=>`<line x1="348" y1="${122+i*28}" x2="553" y2="${122+i*28}" stroke="#b8a882" stroke-width=".7" opacity=".38"/>`).join('')}
+<!-- Shuttered windows -->
+${Array.from({length:3},(_,row)=>Array.from({length:2},(_,col)=>{
+  const x=365+col*98;const y=132+row*90;
+  return`<rect x="${x}" y="${y}" width="62" height="76" fill="#4a6878" rx="4" opacity=".82"/>
+  <rect x="${x}"   y="${y}" width="29" height="76" fill="#3a5868" rx="2 0 0 2" opacity=".65"/>
+  <rect x="${x+33}" y="${y}" width="29" height="76" fill="#3a5868" rx="0 2 2 0" opacity=".65"/>
+  ${Array.from({length:7},(_,s)=>`<line x1="${x+2}" y1="${y+9+s*10}" x2="${x+27}" y2="${y+9+s*10}" stroke="#607888" stroke-width="1" opacity=".5"/>
+  <line x1="${x+35}" y1="${y+9+s*10}" x2="${x+60}" y2="${y+9+s*10}" stroke="#607888" stroke-width="1" opacity=".5"/>`).join('')}`;
+}).join('')).join('')}
+<!-- Cafe awning — detailed striped -->
+<rect x="346" y="344" width="207" height="28" fill="#b82820" opacity=".92"/>
+${Array.from({length:14},(_,i)=>`<rect x="${348+i*15}" y="344" width="7" height="28" fill="#982010" opacity=".3"/>`).join('')}
+<!-- Valance scallop -->
+${Array.from({length:14},(_,i)=>`<path d="M${347+i*15},372 Q${354+i*15},388 ${362+i*15},372" fill="#c02820" opacity=".78"/>`).join('')}
+<!-- Cafe seating -->
+${[358,412,466].map((x,i)=>`
+<rect x="${x}" y="${502-i*2}" width="48" height="6" rx="2" fill="#8a6848" opacity=".8"/>
+<rect x="${x+20}" y="${508-i*2}" width="8" height="26" rx="2" fill="#8a6848" opacity=".8"/>
+<rect x="${x-2}"  y="${515-i*2}" width="24" height="18" rx="2" fill="#9a7858" opacity=".7"/>
+<rect x="${x+26}" y="${515-i*2}" width="24" height="18" rx="2" fill="#9a7858" opacity=".7"/>
+`).join('')}
+<!-- ═══ BUILDING 4 — renaissance right ═══ -->
+<rect x="762" y="78" width="248" height="642" fill="#c8b8a0"/>
+<!-- Pyramid top -->
+<polygon points="886,32 762,82 1010,82" fill="#a89070"/>
+<!-- Facade grid -->
+${Array.from({length:20},(_,i)=>`<line x1="762" y1="${98+i*30}" x2="1010" y2="${98+i*30}" stroke="#b0a082" stroke-width=".7" opacity=".38"/>`).join('')}
+<!-- Windows 5×3 -->
+${Array.from({length:5},(_,row)=>Array.from({length:3},(_,col)=>{
+  const x=780+col*76;const y=112+row*88;const lit=(row+col)%3===0;
+  return`<rect x="${x}" y="${y}" width="52" height="68" fill="${lit?'#ffe090':'#6080a0'}" opacity="${lit?.72:.78}" rx="26 26 0 0"/>
+  <line x1="${x+26}" y1="${y}" x2="${x+26}" y2="${y+68}" stroke="${lit?'#c0a018':'#507088'}" stroke-width="1.2"/>
+  <line x1="${x}" y1="${y+36}" x2="${x+52}" y2="${y+36}" stroke="${lit?'#c0a018':'#507088'}" stroke-width="1.2"/>`;
+}).join('')).join('')}
+<!-- ═══ BUILDING 5 — far right ═══ -->
+<rect x="988" y="42" width="212" height="678" fill="#c0b098"/>
+<polygon points="1094,0 988,48 1200,48" fill="#a09070"/>
+${Array.from({length:22},(_,i)=>`<line x1="988" y1="${62+i*30}" x2="1200" y2="${62+i*30}" stroke="#a89878" stroke-width=".7" opacity=".35"/>`).join('')}
+<!-- Windows building 5 -->
+${Array.from({length:4},(_,row)=>Array.from({length:2},(_,col)=>{
+  const x=1005+col*108;const y=75+row*98;
+  return`<rect x="${x}" y="${y}" width="68" height="84" fill="${(row+col)%2===0?'#ffe090':'#5878a0'}" opacity="${(row+col)%2===0?.62:.75}" rx="5"/>
+  <line x1="${x+34}" y1="${y}" x2="${x+34}" y2="${y+84}" stroke="#507088" stroke-width="1.2" opacity=".5"/>
+  <line x1="${x}" y1="${y+44}" x2="${x+68}" y2="${y+44}" stroke="#507088" stroke-width="1.2" opacity=".5"/>`;
+}).join('')).join('')}
+<!-- ═══ COBBLESTONE ROAD ═══ -->
+<rect x="548" y="428" width="216" height="272" fill="url(#g4road)"/>
+${Array.from({length:9},(_,row)=>Array.from({length:4},(_,col)=>{
+  const x=558+col*48+(row%2)*24;const y=445+row*30;
+  return`<ellipse cx="${x}" cy="${y}" rx="20" ry="9" fill="#888078" opacity=".42" transform="rotate(${Math.sin(row*col)*.8*5},${x},${y})"/>`;
+}).join('')).join('')}
+<!-- Road edge cobbles worn smooth -->
+${Array.from({length:6},(_,i)=>`<ellipse cx="${565+i*34}" cy="${436}" rx="15" ry="6" fill="#908878" opacity=".35"/>`).join('')}
+<!-- ORNATE STREET LAMP -->
+<line x1="660" y1="298" x2="660" y2="528" stroke="#2a2818" stroke-width="7"/>
+<!-- Base plinth -->
+<rect x="653" y="518" width="14" height="16" fill="#38362a" rx="2"/>
+<rect x="648" y="532" width="24" height="8"  fill="#45422e" rx="2"/>
+<!-- Shaft decorative bands -->
+${Array.from({length:5},(_,i)=>`<ellipse cx="660" cy="${390+i*26}" rx="5" ry="3" fill="#404030"/>`).join('')}
+<!-- Arm -->
+<path d="M660,305 Q692,290 706,308" fill="none" stroke="#2a2818" stroke-width="5"/>
+<!-- Lamp globe with glow -->
+<circle cx="706" cy="310" r="14" fill="#fff8c0" opacity=".92"/>
+<circle cx="706" cy="310" r="10" fill="#ffee80"/>
+<circle cx="706" cy="310" r="24" fill="#ffee80" opacity=".12"/>
+<circle cx="700" cy="305" r="4"  fill="#fff8e0" opacity=".4"/>
+<!-- WINDOW FLOWER BOXES -->
+<rect x="358" y="420" width="116" height="18" fill="#8a4828" rx="4"/>
+${Array.from({length:10},(_,i)=>`
+<circle cx="${366+i*11}" cy="${414}" r="${5+Math.sin(i)*1.5}" fill="#2a7a18" opacity=".82"/>
+<circle cx="${366+i*11}" cy="${412}" r="${3+Math.sin(i+1)}" fill="${i%3===0?'#d83050':i%3===1?'#f05070':'#b82030'}" opacity=".88"/>
+`).join('')}
+<!-- PIGEONS — 3 detailed -->
+${[[485,360,1],[395,330,-1],[560,340,1]].map(([x,y,dir])=>`
+<ellipse cx="${x}" cy="${y+8}" rx="15" ry="9"  fill="#909098"/>
+<ellipse cx="${x+dir*12}" cy="${y}" rx="9"  ry="8"  fill="#a0a0a8"/>
+<circle  cx="${x+dir*18}" cy="${y-4}" r="5"  fill="#b0b0b8"/>
+<circle  cx="${x+dir*21}" cy="${y-5}" r="1.8" fill="#0a0a14"/>
+<polygon points="${x+dir*24},${y-3} ${x+dir*30},${y-1} ${x+dir*24},${y+1}" fill="#f07040" opacity=".8"/>
+<ellipse cx="${x+dir*14}" cy="${y-1}" rx="6"  ry="4"  fill="#6888a0" opacity=".45"/>
+`).join('')}
+
+<!-- SHOP SIGNS and posters on buildings -->
+<!-- Hanging sign on merchant house -->
+<rect x="460" y="370" width="72" height="26" fill="#c8a028" rx="4" opacity=".88"/>
+<rect x="460" y="370" width="72" height="26" fill="none" stroke="#a08018" stroke-width="1.5" rx="4" opacity=".6"/>
+<line x1="476" y1="356" x2="476" y2="370" stroke="#5a3818" stroke-width="2.5"/>
+<line x1="516" y1="356" x2="516" y2="370" stroke="#5a3818" stroke-width="2.5"/>
+<!-- Text lines on sign -->
+<line x1="465" y1="377" x2="526" y2="377" stroke="#7a5018" stroke-width="1.2" opacity=".6"/>
+<line x1="468" y1="384" x2="520" y2="384" stroke="#7a5018" stroke-width="1" opacity=".5"/>
+<!-- Torn poster on gothic tower -->
+<rect x="205" y="285" width="48" height="64" fill="#e8d8b0" rx="2" opacity=".62"/>
+<rect x="205" y="285" width="48" height="64" fill="none" stroke="#c0a068" stroke-width="1" rx="2" opacity=".45"/>
+<!-- Torn corner -->
+<polygon points="238,285 253,285 238,305" fill="#c8b890" opacity=".55"/>
+<!-- Lines on poster -->
+${Array.from({length:5},(_,i)=>`<line x1="210" y1="${295+i*9}" x2="248" y2="${295+i*9}" stroke="#9a8050" stroke-width="1.2" opacity=".4"/>`).join('')}
+<!-- Second poster, faded -->
+<rect x="996" y="185" width="52" height="74" fill="#e0d0a8" rx="2" opacity=".42"/>
+${Array.from({length:6},(_,i)=>`<line x1="1001" y1="${193+i*9}" x2="1043" y2="${193+i*9}" stroke="#9a8050" stroke-width="1" opacity=".3"/>`).join('')}
+<!-- STREET VENDOR CART -->
+<g transform="translate(760,468)" opacity=".65">
+  <!-- Cart body -->
+  <rect x="-35" y="-32" width="70" height="36" fill="#c8a028" rx="4"/>
+  <rect x="-35" y="-32" width="70" height="36" fill="none" stroke="#a08018" stroke-width="1.5" rx="4" opacity=".6"/>
+  <!-- Striped awning -->
+  <rect x="-40" y="-46" width="80" height="18" fill="#c82020" rx="3"/>
+  ${Array.from({length:5},(_,i)=>`<rect x="${-38+i*16}" y="-46" width="8" height="18" fill="#a01818" opacity=".35"/>`).join('')}
+  <!-- Valance -->
+  ${Array.from({length:5},(_,i)=>`<path d="M${-38+i*16},-28 Q${-30+i*16},-18 ${-22+i*16},-28" fill="#b81818" opacity=".7"/>`).join('')}
+  <!-- Wheels -->
+  <circle cx="-22" cy="6" r="14" fill="none" stroke="#8a6018" stroke-width="3"/>
+  <circle cx="22" cy="6" r="14" fill="none" stroke="#8a6018" stroke-width="3"/>
+  ${Array.from({length:6},(_,i)=>{const a=i*60*Math.PI/180;return`<line x1="${-22+Math.cos(a)*12}" y1="${6+Math.sin(a)*12}" x2="${-22}" y2="6" stroke="#9a7020" stroke-width="1.5"/>`;}).join('')}
+  <!-- Produce on cart -->
+  ${Array.from({length:5},(_,i)=>`<circle cx="${-25+i*12}" cy="-18" r="${5+Math.sin(i)*1.5}" fill="${['#f04020','#e8a010','#c02818','#f0b010','#e04818'][i]}" opacity=".9"/>`).join('')}
+</g>
+<!-- CAT in window -->
+<g transform="translate(212,318)" fill="#3a3030" opacity=".68">
+  <ellipse cx="0" cy="8" rx="10" ry="8"/>
+  <circle cx="0" cy="0" r="8"/>
+  <!-- Ears -->
+  <polygon points="-8,-6 -12,-16 -3,-10"/>
+  <polygon points="8,-6 12,-16 3,-10"/>
+  <!-- Eyes -->
+  <ellipse cx="-3" cy="0" rx="2.5" ry="3" fill="#ffe880" opacity=".85"/>
+  <ellipse cx="3" cy="0" rx="2.5" ry="3" fill="#ffe880" opacity=".85"/>
+  <ellipse cx="-3" cy="0" rx="1" ry="2.5" fill="#1a1018"/>
+  <ellipse cx="3" cy="0" rx="1" ry="2.5" fill="#1a1018"/>
+  <!-- Tail curl -->
+  <path d="M-10,14 Q-22,18 -20,8 Q-18,2 -12,6" fill="none" stroke="#3a3030" stroke-width="4" stroke-linecap="round"/>
+</g>
+<!-- Well in background street -->
+<g transform="translate(720,400)" opacity=".52">
+  <ellipse cx="0" cy="18" rx="28" ry="14" fill="#b0a888"/>
+  <rect x="-22" y="0" width="44" height="20" fill="#c0b898" rx="2"/>
+  <ellipse cx="0" cy="0" rx="22" ry="8" fill="#a89878"/>
+  <!-- Arch -->
+  <path d="M-28,0 Q-28,-28 0,-32 Q28,-28 28,0" fill="none" stroke="#9a8868" stroke-width="4" stroke-linecap="round"/>
+  <line x1="0" y1="-32" x2="0" y2="-42" stroke="#7a6848" stroke-width="3"/>
+  <polygon points="0,-46 -6,-42 6,-42" fill="#8a7858"/>
+  <!-- Bucket -->
+  <rect x="-6" y="-14" width="12" height="14" fill="#7a5828" rx="2"/>
+  <path d="M-6,-14 Q0,-20 6,-14" fill="none" stroke="#9a7040" stroke-width="2"/>
+</g>
+<!-- Mud stain on building base -->
+<path d="M348,610 Q380,588 420,602 Q458,616 500,598 Q540,580 553,602" fill="#9a8870" opacity=".22"/>
+<!-- Horse and cart in street -->
+<g transform="translate(580,480)" opacity=".55">
+  <rect x="0" y="-18" width="55" height="22" fill="#8a6030" rx="3"/>
+  <rect x="55" y="-22" width="40" height="28" fill="#a07038" rx="4"/>
+  <!-- Wheels -->
+  <circle cx="12"  cy="8" r="14" fill="none" stroke="#5a3818" stroke-width="3"/>
+  <circle cx="58"  cy="8" r="14" fill="none" stroke="#5a3818" stroke-width="3"/>
+  ${Array.from({length:6},(_,i)=>`<line x1="${12+Math.cos(i*60*Math.PI/180)*12}" y1="${8+Math.sin(i*60*Math.PI/180)*12}" x2="${12}" y2="8" stroke="#6a4820" stroke-width="1.5"/>
+  <line x1="${58+Math.cos(i*60*Math.PI/180)*12}" y1="${8+Math.sin(i*60*Math.PI/180)*12}" x2="${58}" y2="8" stroke="#6a4820" stroke-width="1.5"/>`).join('')}
+  <!-- Horse -->
+  <ellipse cx="-28" cy="-8"  rx="25" ry="14" fill="#6a4020"/>
+  <rect   x="-44"  y="-22" width="14" height="18" fill="#5a3818"/>
+  <circle cx="-36"  cy="-28" r="10"  fill="#7a5030"/>
+  <!-- Legs -->
+  ${[-55,-45,-35,-25].map(x=>`<line x1="${x}" y1="6" x2="${x-2}" y2="28" stroke="#5a3818" stroke-width="4"/>`).join('')}
+</g>
+`,egg:{x:370,y:402,w:26,h:34,color:'#c07868',stroke:'#a05848',opacity:.34,pattern:'dots'}},
+
+// ══ 5 · HORSKÝ LES ════════════════════════════════════════════
+{name:"Horský les",svg:`
+<defs>
+  <linearGradient id="g5sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#88c8ec"/><stop offset="100%" stop-color="#c8eaf8"/></linearGradient>
+  <linearGradient id="g5mA"  x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e8f4fc"/><stop offset="28%" stop-color="#96b2c8"/><stop offset="100%" stop-color="#6888a0"/></linearGradient>
+  <linearGradient id="g5mB"  x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e0f0fa"/><stop offset="32%" stop-color="#8aaabf"/><stop offset="100%" stop-color="#608098"/></linearGradient>
+  <linearGradient id="g5gr"  x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#347030"/><stop offset="100%" stop-color="#1e4a18"/></linearGradient>
+  <linearGradient id="g5str" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#58aace"/><stop offset="100%" stop-color="#3888a8"/></linearGradient>
+</defs>
+<rect width="1200" height="700" fill="url(#g5sky)"/>
+<!-- Mountain chain — 5 ranges, front to back -->
+<polygon points="-20,468 290,58  618,468" fill="url(#g5mA)"/>
+<polygon points="100,468 428,32  758,468" fill="#88a8bc" opacity=".74"/>
+<polygon points="360,468 688,18  1018,468" fill="#98b8ce" opacity=".69"/>
+<polygon points="620,468 948,55  1278,468" fill="#88a8bc" opacity=".73"/>
+<polygon points="860,468 1100,88 1340,468" fill="#a0c0d4" opacity=".6"/>
+<!-- Snow caps with multiple layers -->
+${[[290,58,85],[428,32,90],[688,18,95],[948,55,88],[1100,88,72]].map(([cx,y,r])=>`
+<polygon points="${cx},${y} ${cx-r*.52},${y+r*.82} ${cx+r*.52},${y+r*.82}" fill="#f2f8ff" opacity=".96"/>
+<polygon points="${cx},${y} ${cx-r*.32},${y+r*.5}  ${cx+r*.32},${y+r*.5}" fill="#fff" opacity=".82"/>
+<polygon points="${cx},${y} ${cx-r*.18},${y+r*.28} ${cx+r*.18},${y+r*.28}" fill="#fff" opacity=".6"/>
+`).join('')}
+<!-- Atmospheric haze bands between mountain ranges -->
+<rect y="388" width="1200" height="30" fill="#c8e4f0" opacity=".15"/>
+<rect y="418" width="1200" height="20" fill="#c8e4f0" opacity=".1"/>
+<!-- GROUND -->
+<rect y="468" width="1200" height="232" fill="url(#g5gr)"/>
+<ellipse cx="600" cy="468" rx="660" ry="32" fill="#2c6025"/>
+<!-- Forest floor — moss, needles, rocks -->
+<g fill="#264820" opacity=".55">${Array.from({length:12},(_,i)=>`<ellipse cx="${i*100+50}" cy="${495+Math.sin(i)*12}" rx="${55+Math.sin(i)*15}" ry="${18+Math.cos(i)*6}"/>`).join('')}</g>
+<!-- Pine needle carpet texture -->
+<g stroke="#4a6838" stroke-width=".8" opacity=".35">${Array.from({length:50},(_,i)=>{const x=i*24;const y=488+Math.sin(i*1.3)*12;return`<line x1="${x}" y1="${y}" x2="${x+8}" y2="${y+6}"/><line x1="${x+4}" y1="${y}" x2="${x-4}" y2="${y+6}"/>`;}).join('')}</g>
+<!-- ROCKS — various sizes, detailed -->
+${[[185,498,26,12],[215,494,18,9],[880,492,30,14],[915,488,20,9],[620,505,14,7],[640,502,10,5],[1080,500,24,11]].map(([x,y,rx,ry])=>`
+<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#606e58" opacity=".78"/>
+<ellipse cx="${x-4}" cy="${y-3}" rx="${rx*.38}" ry="${ry*.38}" fill="#808e78" opacity=".42"/>
+<ellipse cx="${x+rx*.3}" cy="${y+ry*.2}" rx="${rx*.18}" ry="${ry*.18}" fill="#505e48" opacity=".35"/>
+`).join('')}
+<!-- FERNS — 3 detailed clumps -->
+${[[108,492],[835,488],[1100,482]].map(([fx,fy])=>`
+<g fill="#246818" opacity=".78">
+  <path d="M${fx},${fy} Q${fx-20},${fy-28} ${fx-35},${fy-15} Q${fx-20},${fy-22} ${fx},${fy}"/>
+  <path d="M${fx},${fy} Q${fx-10},${fy-32} ${fx+5},${fy-20} Q${fx-5},${fy-26} ${fx},${fy}"/>
+  <path d="M${fx},${fy} Q${fx+12},${fy-30} ${fx+28},${fy-16} Q${fx+12},${fy-24} ${fx},${fy}"/>
+  <path d="M${fx},${fy} Q${fx+22},${fy-24} ${fx+38},${fy-8}  Q${fx+20},${fy-20} ${fx},${fy}"/>
+  <path d="M${fx},${fy} Q${fx-15},${fy-18} ${fx-30},${fy-2}  Q${fx-12},${fy-14} ${fx},${fy}"/>
+</g>`).join('')}
+<!-- MUSHROOMS with gills -->
+${[[292,488,22,10],[318,492,16,8],[895,484,20,9],[1055,498,14,7]].map(([x,y,rx,ry],i)=>{const cols=['#c02820','#a81e18','#c84830','#822010'];return`
+<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${cols[i]}" opacity=".88"/>
+<ellipse cx="${x}" cy="${y}" rx="${rx*.8}" ry="${ry*.3}" fill="#fff" opacity=".18"/>
+${Array.from({length:4},(_,j)=>`<circle cx="${x-rx*.5+j*rx*.3}" cy="${y-ry*.1}" r="2" fill="#fff" opacity=".55"/>`).join('')}
+<rect x="${x-4}" y="${y}" width="8" height="${14+Math.sin(i)*4}" fill="#e8dcc0" rx="2"/>
+<g stroke="#c8c0a0" stroke-width=".7" opacity=".45">${Array.from({length:5},(_,j)=>`<line x1="${x-3}" y1="${y+2+j*2.5}" x2="${x+3}" y2="${y+2+j*2.5}"/>`).join('')}</g>
+`;}).join('')}
+<!-- STREAM — detailed with rocks -->
+<path d="M410,700 Q432,642 405,578 Q378,514 422,476 Q450,458 478,476" fill="none" stroke="url(#g5str)" stroke-width="18" opacity=".58"/>
+<path d="M410,700 Q432,642 405,578 Q378,514 422,476 Q450,458 478,476" fill="none" stroke="#8ad4e8" stroke-width="8" opacity=".42"/>
+<path d="M410,700 Q432,642 405,578 Q378,514 422,476 Q450,458 478,476" fill="none" stroke="#bae8f8" stroke-width="3" opacity=".3"/>
+<!-- Stream rocks -->
+${[[430,504,12,6],[418,542,10,5],[438,578,14,7]].map(([x,y,rx,ry])=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#587058" opacity=".72"/>`).join('')}
+<!-- FAR TREES -->
+<g fill="#2c5820" opacity=".5">${Array.from({length:10},(_,i)=>{const x=22+i*120;return`<polygon points="${x},468 ${x-26},488 ${x+26},488"/><polygon points="${x},482 ${x-30},500 ${x+30},500"/><rect x="${x-6}" y="498" width="12" height="22" fill="#3c2810" opacity=".8"/>`;}).join('')}</g>
+<!-- MID TREES -->
+<g fill="#185415">
+  ${[[225,388,28,3],[940,378,30,3]].map(([x,y,tw,tiers])=>Array.from({length:tiers},(_,t)=>`<polygon points="${x},${y-tiers*24+t*24} ${x-tw-t*16},${y-tiers*24+t*24+24} ${x+tw+t*16},${y-tiers*24+t*24+24}"/>`).join('')).join('')}
+  <rect x="218" y="460" width="14" height="50" fill="#3a2010"/>
+  <rect x="933" y="460" width="14" height="50" fill="#3a2010"/>
+</g>
+<!-- THREE MASSIVE FOREGROUND PINES with bark texture -->
+${[[398,468,5,26,'#0a2806','#123410','#183c14','#1e4818'],[582,468,6,30,'#082204','#0e2e08','#14380e','#1a4214'],[768,468,5,26,'#0c2a08','#123410','#183c14','#1e4818']].map(([x,yb,tiers,tw,t1,t2,t3,t4])=>{
+const trunkH=tiers*26;let s=`<rect x="${x-9}" y="${yb-trunkH}" width="18" height="${trunkH+12}" fill="#2e1c08"/>`;
+// Bark fissures
+s+=`<g stroke="#3a2410" stroke-width=".9" opacity=".5">${Array.from({length:6},(_,i)=>`<path d="M${x-6} ${yb-trunkH+i*40} Q${x} ${yb-trunkH+i*40+12} ${x+6} ${yb-trunkH+i*40+22}"/>`).join('')}</g>`;
+// Pine tiers
+for(let t=0;t<tiers;t++){const w=tw+t*20;const ty=yb-trunkH+t*26;const col=[t1,t2,t3,t4][Math.min(Math.floor(t/(tiers/4)),3)];s+=`<polygon points="${x},${ty-26} ${x-w},${ty} ${x+w},${ty}" fill="${col}"/>`;}
+// Snow on top 3 tiers
+for(let t=0;t<3;t++){const w=tw+t*20;const ty=yb-trunkH+t*26;s+=`<polygon points="${x},${ty-26} ${x-w*.55},${ty} ${x+w*.55},${ty}" fill="#e8f4ff" opacity="${.88-t*.12}"/>`;}
+// Root flare
+s+=`<path d="M${x-9},${yb} Q${x-28},${yb+10} ${x-38},${yb+18}" fill="none" stroke="#2e1c08" stroke-width="8" stroke-linecap="round"/>
+<path d="M${x+9},${yb} Q${x+28},${yb+10} ${x+38},${yb+18}" fill="none" stroke="#2e1c08" stroke-width="7" stroke-linecap="round"/>`;
+return s;}).join('')}
+<!-- DEER in forest shadow -->
+<g fill="#3a2818" opacity=".62" transform="translate(702,415)">
+  <ellipse cx="0" cy="18" rx="28" ry="15"/>
+  <rect x="-6" y="2" width="14" height="24"/>
+  <circle cx="12" cy="-6" r="11"/>
+  <!-- Legs -->
+  ${[[-18,6],[-8,6],[8,8],[18,6]].map(([lx,lw])=>`<line x1="${lx}" y1="32" x2="${lx-2}" y2="60" stroke="#3a2818" stroke-width="${lw}"/>`).join('')}
+  <!-- Antlers -->
+  <line x1="12" y1="-14" x2="5"  y2="-30" stroke="#3a2818" stroke-width="2.5"/>
+  <line x1="5"  y1="-30" x2="-2" y2="-42" stroke="#3a2818" stroke-width="2"/>
+  <line x1="5"  y1="-30" x2="12" y2="-40" stroke="#3a2818" stroke-width="2"/>
+  <line x1="12" y1="-14" x2="19" y2="-30" stroke="#3a2818" stroke-width="2.5"/>
+  <line x1="19" y1="-30" x2="24" y2="-42" stroke="#3a2818" stroke-width="2"/>
+  <line x1="19" y1="-30" x2="12" y2="-40" stroke="#3a2818" stroke-width="2"/>
+  <circle cx="18" cy="-8" r="2" fill="#fff" opacity=".5"/>
+</g>
+
+<!-- Spider web between pines -->
+<g stroke="#c8c0b0" stroke-width=".6" opacity=".38">
+  ${Array.from({length:7},(_,i)=>{const a=i*26*Math.PI/180;return`<line x1="470" y1="320" x2="${470+Math.cos(a)*48}" y2="${320+Math.sin(a)*48}"/>`;}).join('')}
+  ${Array.from({length:3},(_,i)=>`<path d="${Array.from({length:8},(_,j)=>{const a=j*26*Math.PI/180;const r=14+i*14;return`${j===0?'M':'L'}${470+Math.cos(a)*r},${320+Math.sin(a)*r}`;}).join(' ')} Z"/>`).join('')}
+</g>
+<!-- Spider -->
+<circle cx="470" cy="320" r="3" fill="#2a1808" opacity=".45"/>
+<!-- Pine cones on ground -->
+${[[310,500],[342,508],[605,510],[635,506],[800,504]].map(([x,y])=>`
+<ellipse cx="${x}" cy="${y}" rx="8" ry="14" fill="#8a5828" opacity=".72"/>
+${Array.from({length:5},(_,i)=>`<path d="M${x-7+i*3},${y-8+i*4} Q${x},${y-10+i*4} ${x+7-i*3},${y-8+i*4}" fill="none" stroke="#6a3818" stroke-width="1.2" opacity=".5"/>`).join('')}
+`).join('')}
+<!-- Bird nest in tree -->
+<g transform="translate(416,340)" opacity=".65">
+  <path d="M-16,0 Q0,10 16,0 Q14,-14 0,-18 Q-14,-14 -16,0" fill="#9a7848"/>
+  <!-- Nest weave -->
+  <g stroke="#7a5828" stroke-width=".8" opacity=".55">
+    ${Array.from({length:5},(_,i)=>`<path d="M${-14+i*5},-12 Q${-14+i*5+3},${-4+i*4} ${-14+i*5+6},-12"/>`).join('')}
+  </g>
+  <!-- Eggs in nest -->
+  <ellipse cx="-5" cy="-4" rx="5" ry="4" fill="#c0d8e8" opacity=".9"/>
+  <ellipse cx="5" cy="-4" rx="5" ry="4" fill="#c0d8e8" opacity=".9"/>
+  <ellipse cx="0" cy="-8" rx="4" ry="3.5" fill="#c8e0f0" opacity=".85"/>
+</g>
+<!-- Fallen log with moss -->
+<ellipse cx="1020" cy="490" rx="95" ry="18" fill="#5a3818" opacity=".65"/>
+<ellipse cx="1020" cy="488" rx="95" ry="10" fill="#6a4820" opacity=".4"/>
+<g fill="#2a5818" opacity=".5">${Array.from({length:12},(_,i)=>`<ellipse cx="${940+i*14}" cy="${482}" rx="${7+Math.sin(i)*2}" ry="${4+Math.sin(i+1)*2}"/>`).join('')}</g>
+<!-- Log end rings -->
+<ellipse cx="918" cy="490" rx="18" ry="18" fill="#4a2c10" opacity=".72"/>
+${Array.from({length:4},(_,i)=>`<circle cx="918" cy="490" r="${4+i*4}" fill="none" stroke="#5a3818" stroke-width=".8" opacity=".5"/>`).join('')}
+<!-- Eagle far high in sky -->
+<g fill="none" stroke="#2a3030" stroke-width="2" stroke-linecap="round" opacity=".5" transform="translate(855,108)">
+  <path d="M0,0 Q14,-10 28,0"/>
+  <path d="M0,0 Q-14,-10 -28,0"/>
+  <ellipse cx="0" cy="0" rx="7" ry="5" fill="#2a2820" stroke="none"/>
+</g>
+<!-- Mountain stream extra — waterfall splash -->
+<ellipse cx="422" cy="476" rx="18" ry="8" fill="#a8d8e8" opacity=".35"/>
+${Array.from({length:5},(_,i)=>`<line x1="${415+i*3}" y1="${468}" x2="${412+i*3}" y2="${480}" stroke="#c8eaf8" stroke-width="1.5" opacity=".4"/>`).join('')}
+<!-- WOLF EYES in shadow at forest edge -->
+<g opacity=".55">
+  <ellipse cx="30" cy="438" rx="5" ry="4" fill="#d4e810" opacity=".45"/>
+  <ellipse cx="46" cy="436" rx="5" ry="4" fill="#d4e810" opacity=".45"/>
+  <circle cx="31" cy="437" r="2" fill="#1a1a0a"/>
+  <circle cx="47" cy="435" r="2" fill="#1a1a0a"/>
+</g>
+<!-- Flying birds -->
+<g fill="none" stroke="#2a3840" stroke-width="1.5" stroke-linecap="round" opacity=".45">
+  ${[[308,195],[328,182],[352,197],[740,172],[764,158]].map(([x,y])=>`<path d="M${x},${y} Q${x+10},${y-10} ${x+20},${y}"/>`).join('')}
+</g>
+`,egg:{x:586,y:455,w:22,h:30,color:'#1e1808',stroke:'#120e04',opacity:.40,pattern:'none'}},
+
+// ══ 6 · STARÝ MLÝN V MLZE ════════════════════════════════════
+{name:"Starý mlýn v mlze",svg:`
+<defs>
+  <linearGradient id="g6fog" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c2d0d6"/><stop offset="100%" stop-color="#a2b2b8"/></linearGradient>
+  <radialGradient id="g6f1" cx="28%" cy="65%"><stop offset="0%" stop-color="#d8e8ec" stop-opacity=".72"/><stop offset="100%" stop-color="#d8e8ec" stop-opacity="0"/></radialGradient>
+  <radialGradient id="g6f2" cx="72%" cy="58%"><stop offset="0%" stop-color="#cce0e4" stop-opacity=".65"/><stop offset="100%" stop-color="#cce0e4" stop-opacity="0"/></radialGradient>
+  <radialGradient id="g6f3" cx="50%" cy="80%"><stop offset="0%" stop-color="#d0dce0" stop-opacity=".55"/><stop offset="100%" stop-color="#d0dce0" stop-opacity="0"/></radialGradient>
+  <linearGradient id="g6riv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7298a8"/><stop offset="100%" stop-color="#527888"/></linearGradient>
+  <linearGradient id="g6stn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c8b8a0"/><stop offset="100%" stop-color="#aea090"/></linearGradient>
+</defs>
+<rect width="1200" height="700" fill="url(#g6fog)"/>
+<!-- Layered fog patches -->
+<ellipse cx="340"  cy="525" rx="520" ry="165" fill="url(#g6f1)"/>
+<ellipse cx="860"  cy="505" rx="500" ry="185" fill="url(#g6f2)"/>
+<ellipse cx="600"  cy="600" rx="640" ry="135" fill="url(#g6f3)"/>
+<ellipse cx="180"  cy="430" rx="320" ry="108" fill="#ccd8dc" opacity=".28"/>
+<ellipse cx="1020" cy="445" rx="300" ry="118" fill="#cad4d8" opacity=".26"/>
+<ellipse cx="600"  cy="350" rx="580" ry="80"  fill="#d8e4e8" opacity=".15"/>
+<!-- Ghostly far trees — 3 sets -->
+${[[60,395,52,168],[130,382,56,180],[1065,388,52,172],[1135,376,56,184]].map(([x,y,tw,h])=>`
+<polygon points="${x},${y-h}   ${x-tw*.5},${y-h*.6} ${x+tw*.5},${y-h*.6}" fill="#708090" opacity=".25"/>
+<polygon points="${x},${y-h*.6} ${x-tw*.55},${y-h*.35} ${x+tw*.55},${y-h*.35}" fill="#708090" opacity=".22"/>
+<polygon points="${x},${y-h*.35} ${x-tw*.6},${y} ${x+tw*.6},${y}" fill="#708090" opacity=".2"/>
+<rect x="${x-7}" y="${y}" width="14" height="42" fill="#607080" opacity=".25"/>
+`).join('')}
+<!-- RIVER with mirror surface -->
+<path d="M0,548 Q200,528 400,548 Q600,568 800,548 Q1000,528 1200,548 L1200,700 L0,700 Z" fill="url(#g6riv)" opacity=".58"/>
+<!-- River ripple layers -->
+${Array.from({length:14},(_,i)=>{const y=562+i*9;return`<path d="M0,${y} Q150,${y-5} 300,${y} Q450,${y+5} 600,${y} Q750,${y-5} 900,${y} Q1050,${y+5} 1200,${y}" fill="none" stroke="#8ab0c0" stroke-width="${.9-i*.04}" opacity="${.38-i*.02}"/>`;}).join('')}
+<!-- Mill wall reflection in river -->
+<g transform="translate(0,1098) scale(1,-1)" opacity=".18">
+  <rect x="393" y="212" width="326" height="330" fill="#c8b8a0"/>
+  <polygon points="370,212 556,68 742,212" fill="#8a6050"/>
+</g>
+<!-- MILL BUILDING — hyper-detailed stonework -->
+<rect x="392" y="210" width="328" height="338" fill="url(#g6stn)"/>
+<!-- Irregular stone courses — each row slightly different height -->
+${Array.from({length:14},(_,i)=>`<line x1="392" y1="${234+i*22}" x2="720" y2="${234+i*22}" stroke="#a09080" stroke-width=".9" opacity=".52"/>`).join('')}
+<!-- Vertical mortar joints — staggered -->
+${Array.from({length:14},(_,row)=>Array.from({length:9},(_,col)=>`<line x1="${392+col*38+(row%2)*19}" y1="${234+row*22}" x2="${392+col*38+(row%2)*19}" y2="${256+row*22}" stroke="#a09080" stroke-width=".7" opacity=".4"/>`).join('')).join('')}
+<!-- Individual stone color variation -->
+${Array.from({length:14},(_,row)=>Array.from({length:9},(_,col)=>{const shade=Math.sin(row*col*1.7)*.04;return`<rect x="${393+col*38+(row%2)*19+1}" y="${235+row*22+1}" width="36" height="20" fill="${`hsl(35,22%,${62+shade*100}%)`}" opacity=".35" rx="1"/>`;}).join('')).join('')}
+<!-- Corner quoins — large blocks -->
+${Array.from({length:16},(_,i)=>`<rect x="392" y="${210+i*24}" width="28" height="18" fill="#d0c0a8" opacity=".45" rx="1"/>
+<rect x="692" y="${210+i*24}" width="28" height="18" fill="#d0c0a8" opacity=".45" rx="1"/>`).join('')}
+<!-- STEEP ROOF with tiles -->
+<polygon points="366,210 556,65 746,210" fill="#9a6e58"/>
+<!-- Roof tile rows -->
+${Array.from({length:9},(_,row)=>{const pw=row*26+12;const numT=Math.floor(pw*2.2/22);const startX=556-pw;const y=78+row*16;return Array.from({length:numT},(_,col)=>`<path d="M${startX+col*22},${y} Q${startX+col*22+11},${y-8} ${startX+col*22+22},${y} L${startX+col*22+22},${y+14} L${startX+col*22},${y+14} Z" fill="#8a5e48" opacity=".68"/>`).join('');}).join('')}
+<!-- Ridge cap -->
+<rect x="550" y="65" width="12" height="50" fill="#7a4e38"/>
+<!-- CHIMNEY — detailed -->
+<rect x="614" y="92" width="42" height="102" fill="#a09078"/>
+${Array.from({length:6},(_,i)=>`<line x1="614" y1="${110+i*16}" x2="656" y2="${110+i*16}" stroke="#907860" stroke-width=".9" opacity=".5"/>`).join('')}
+<line x1="635" y1="92" x2="635" y2="194" stroke="#907860" stroke-width=".9" opacity=".45"/>
+<rect x="608" y="88" width="54" height="14" fill="#b0a088" rx="3"/>
+<rect x="604" y="83" width="62" height="9"  fill="#c0b098" rx="2"/>
+<!-- Chimney smoke — 4 wisps -->
+<path d="M635,83 Q650,60 634,40 Q618,20 636,0"   fill="none" stroke="#b0b8bc" stroke-width="11" stroke-linecap="round" opacity=".42"/>
+<path d="M648,86 Q665,60 648,38 Q631,18 650,0"   fill="none" stroke="#b0b8bc" stroke-width="7"  stroke-linecap="round" opacity=".3"/>
+<path d="M622,87 Q605,64 618,44 Q630,24 618,8"   fill="none" stroke="#b0b8bc" stroke-width="5"  stroke-linecap="round" opacity=".24"/>
+<path d="M640,84 Q658,58 644,36"                  fill="none" stroke="#b0b8bc" stroke-width="3"  stroke-linecap="round" opacity=".18"/>
+<!-- ARCHED WINDOWS — double with tracery -->
+${[[428,265,'#6888a0',true],[604,263,'#6888a0',false]].map(([x,y,col,warm])=>`
+<path d="M${x},${y} Q${x+36},${y-26} ${x+72},${y} L${x+72},${y+80} L${x},${y+80} Z" fill="${col}" opacity=".82"/>
+${warm?`<path d="M${x+4},${y+4} Q${x+36},${y-20} ${x+68},${y+4} L${x+68},${y+76} L${x+4},${y+76} Z" fill="#e8c060" opacity=".28"/>`:''}
+<!-- Mullion cross -->
+<line x1="${x+36}" y1="${y-6}" x2="${x+36}" y2="${y+80}" stroke="#c8b898" stroke-width="2.2" opacity=".6"/>
+<line x1="${x}" y1="${y+44}" x2="${x+72}" y2="${y+44}" stroke="#c8b898" stroke-width="2"   opacity=".55"/>
+<!-- Tracery -->
+<circle cx="${x+36}" cy="${y+8}" r="14" fill="none" stroke="#c8b898" stroke-width="1.2" opacity=".4"/>
+<!-- Glass reflections -->
+<ellipse cx="${x+18}" cy="${y+22}" rx="8" ry="14" fill="#d8f0f8" opacity=".22" transform="rotate(-12,${x+18},${y+22})"/>
+<!-- Window sill -->
+<rect x="${x-4}" y="${y+80}" width="80" height="8" fill="#c0b090" rx="2"/>
+`).join('')}
+<!-- MAIN DOOR — heavy oak -->
+<rect x="522" y="404" width="68" height="144" fill="#7a5030" rx="5 5 0 0"/>
+${Array.from({length:7},(_,i)=>`<line x1="522" y1="${418+i*18}" x2="590" y2="${418+i*18}" stroke="#6a4020" stroke-width="2" opacity=".5"/>`).join('')}
+<line x1="556" y1="404" x2="556" y2="548" stroke="#6a4020" stroke-width="2.5" opacity=".45"/>
+<!-- Door braces X -->
+<line x1="522" y1="404" x2="590" y2="490" stroke="#5a3818" stroke-width="2.5" opacity=".4"/>
+<line x1="590" y1="404" x2="522" y2="490" stroke="#5a3818" stroke-width="2.5" opacity=".4"/>
+<!-- Hardware -->
+<rect x="528" y="468" width="20" height="9"  fill="#5a3818" rx="2"/>
+<rect x="562" y="468" width="20" height="9"  fill="#5a3818" rx="2"/>
+<circle cx="555" cy="440" r="5" fill="#c89030"/>
+<!-- WATER WHEEL — massive, 8-spoke -->
+<circle cx="720" cy="452" r="104" fill="none" stroke="#6a4828" stroke-width="11"/>
+<!-- Inner ring -->
+<circle cx="720" cy="452" r="65"  fill="none" stroke="#7a5838" stroke-width="5"/>
+<circle cx="720" cy="452" r="12"  fill="#8a6840"/>
+<circle cx="720" cy="452" r="18"  fill="none" stroke="#7a5830" stroke-width="4"/>
+<!-- 8 spokes -->
+${Array.from({length:8},(_,i)=>{const a=i*45*Math.PI/180;return`<line x1="${720+14*Math.cos(a)}" y1="${452+14*Math.sin(a)}" x2="${720+102*Math.cos(a)}" y2="${452+102*Math.sin(a)}" stroke="#7a5830" stroke-width="8" stroke-linecap="round"/>`;}).join('')}
+<!-- 8 paddles -->
+${Array.from({length:8},(_,i)=>{const a=i*45*Math.PI/180;const px=720+95*Math.cos(a);const py=452+95*Math.sin(a);return`<rect x="${px-14}" y="${py-7}" width="28" height="14" rx="2" fill="#8a6030" transform="rotate(${i*45},${px},${py})"/>
+<g stroke="#7a5020" stroke-width="1" opacity=".45">${Array.from({length:3},(_,k)=>`<line x1="${px-14+k*10}" y1="${py-7}" x2="${px-14+k*10}" y2="${py+7}" transform="rotate(${i*45},${px},${py})"/>`).join('')}</g>`;}).join('')}
+<!-- Water falling off wheel -->
+${Array.from({length:6},(_,i)=>`<path d="M${660+i*8},${548} Q${658+i*8},${565} ${655+i*8},${580}" fill="none" stroke="#88c0d0" stroke-width="1.5" stroke-dasharray="3,3" opacity=".42"/>`).join('')}
+<!-- Vegetation base -->
+${[[372,548,'M372,548 Q388,516 404,548'],[388,552,'M388,552 Q406,518 422,552'],[736,544,'M736,544 Q752,512 768,544'],[752,548,'M752,548 Q770,514 786,548']].map(([_,__,d])=>`<path d="${d}" fill="#4a6a3a" opacity=".62"/>`).join('')}
+
+<!-- Ivy growing on mill wall -->
+<g fill="#2a5818" opacity=".55">
+  ${Array.from({length:12},(_,i)=>`<ellipse cx="${392+Math.sin(i*1.8)*12}" cy="${240+i*18}" rx="${8+Math.sin(i)*3}" ry="${6+Math.sin(i+1)*2}" transform="rotate(${Math.sin(i*2)*20},${392+Math.sin(i*1.8)*12},${240+i*18})"/>`).join('')}
+  <path d="M392,240 Q386,310 390,390" fill="none" stroke="#2a5818" stroke-width="3" opacity=".65"/>
+  ${Array.from({length:8},(_,i)=>`<path d="M${388+Math.sin(i*2)*6},${256+i*20} Q${375+Math.sin(i)*14},${248+i*20} ${370+Math.sin(i)*18},${258+i*20}" fill="#2a5818" opacity=".48"/>`).join('')}
+</g>
+<!-- Ivy right side -->
+<g fill="#266018" opacity=".48">
+  <path d="M720,285 Q726,340 722,420" fill="none" stroke="#266018" stroke-width="2.5" opacity=".58"/>
+  ${Array.from({length:7},(_,i)=>`<ellipse cx="${720+Math.sin(i*2)*10}" cy="${295+i*20}" rx="${7+Math.sin(i)*3}" ry="${5+Math.sin(i+1)*2}"/>`).join('')}
+</g>
+<!-- Rusty iron wheel fittings -->
+${Array.from({length:4},(_,i)=>{const a=i*90*Math.PI/180;const x=720+Math.cos(a)*95;const y=452+Math.sin(a)*95;return`<circle cx="${x}" cy="${y}" r="6" fill="#7a4820" stroke="#5a3010" stroke-width="1.5" opacity=".7"/>`;}).join('')}
+<!-- Mill stone visible through door -->
+<circle cx="556" cy="430" r="32" fill="#9a8870" opacity=".38"/>
+<circle cx="556" cy="430" r="18" fill="#7a6858" opacity=".35"/>
+<circle cx="556" cy="430" r="6"  fill="#5a5048" opacity=".4"/>
+${Array.from({length:6},(_,i)=>{const a=i*60*Math.PI/180;return`<line x1="${556+6*Math.cos(a)}" y1="${430+6*Math.sin(a)}" x2="${556+30*Math.cos(a)}" y2="${430+30*Math.sin(a)}" stroke="#6a5848" stroke-width="1.5" opacity=".35"/>`;}).join('')}
+<!-- Cat watching from mill doorstep -->
+<g transform="translate(516,536)" opacity=".7">
+  <ellipse cx="0" cy="8" rx="11" ry="9" fill="#8a7858"/>
+  <circle cx="0" cy="0" r="8.5" fill="#9a8868"/>
+  <polygon points="-8,-6 -12,-16 -3,-10" fill="#8a7858"/>
+  <polygon points="8,-6 12,-16 3,-10" fill="#8a7858"/>
+  <ellipse cx="-3" cy="0" rx="2.5" ry="3" fill="#d0c010" opacity=".88"/>
+  <ellipse cx="3" cy="0" rx="2.5" ry="3" fill="#d0c010" opacity=".88"/>
+  <ellipse cx="-3" cy="0" rx="1" ry="2.5" fill="#1a1810"/>
+  <ellipse cx="3" cy="0" rx="1" ry="2.5" fill="#1a1810"/>
+  <polygon points="0,4 -2,8 2,8" fill="#d09878"/>
+  <path d="M-11,14 Q-22,20 -20,10 Q-18,4 -12,7" fill="none" stroke="#8a7858" stroke-width="3.5" stroke-linecap="round"/>
+</g>
+<!-- Moss and lichen on stones -->
+${Array.from({length:18},(_,i)=>{const row=Math.floor(i/6);const col=i%6;const x=410+col*52+(row%2)*26;const y=248+row*48;return`<ellipse cx="${x}" cy="${y}" rx="${5+Math.sin(i*2)*2}" ry="${3+Math.sin(i)*1.5}" fill="#4a7830" opacity="${.18+Math.sin(i)*.08}"/>`;}).join('')}
+<!-- Water lily in river corner -->
+<g transform="translate(162,598)" opacity=".6">
+  <ellipse cx="0" cy="0" rx="28" ry="18" fill="#1e5818"/>
+  ${Array.from({length:8},(_,i)=>{const a=i*45*Math.PI/180;return`<ellipse cx="${Math.cos(a)*22}" cy="${Math.sin(a)*14}" rx="9" ry="13" fill="#fff9e0" opacity=".78" transform="rotate(${i*45},${Math.cos(a)*22},${Math.sin(a)*14})"/>`;}).join('')}
+  <circle cx="0" cy="0" r="6" fill="#ffe058"/>
+</g>
+<!-- Mist tendrils at water level (extra) -->
+<path d="M0,560 Q120,550 240,562 Q360,574 480,560" fill="none" stroke="#c8d4d8" stroke-width="12" stroke-linecap="round" opacity=".18"/>
+<path d="M720,558 Q840,546 960,558 Q1080,570 1200,555" fill="none" stroke="#c8d4d8" stroke-width="10" stroke-linecap="round" opacity=".16"/>
+<!-- FOG overlays -->
+<rect y="630" width="1200" height="70" fill="#c0ccd0" opacity=".28"/>
+<ellipse cx="600" cy="680" rx="700" ry="40" fill="#cad4d8" opacity=".2"/>
+`,egg:{x:448,y:478,w:26,h:34,color:'#9c9082',stroke:'#7c7062',opacity:.28,pattern:'none'}},
+
+// ══ 7 · JARNÍ PIKNIK ═════════════════════════════════════════
+{name:"Jarní piknik",svg:`
+<defs>
+  <linearGradient id="g7sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#42b0f0"/><stop offset="55%" stop-color="#88d0f8"/><stop offset="100%" stop-color="#c8eefe"/></linearGradient>
+  <linearGradient id="g7gr"  x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#48b030"/><stop offset="100%" stop-color="#308020"/></linearGradient>
+  <radialGradient id="g7sun"><stop offset="0%" stop-color="#fffaaa"/><stop offset="42%" stop-color="#ffe040" stop-opacity=".7"/><stop offset="100%" stop-color="#ffe040" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1200" height="700" fill="url(#g7sky)"/>
+<!-- Sun -->
+<circle cx="978" cy="78"  r="85"  fill="url(#g7sun)"/>
+<circle cx="978" cy="78"  r="52"  fill="#ffee44" opacity=".96"/>
+<circle cx="978" cy="78"  r="42"  fill="#fff8a0" opacity=".55"/>
+<!-- Sun ray spokes -->
+<g stroke="#ffe060" stroke-width="2" opacity=".42">${Array.from({length:16},(_,i)=>{const a=i*22.5*Math.PI/180;return`<line x1="${978+60*Math.cos(a)}" y1="${78+60*Math.sin(a)}" x2="${978+86*Math.cos(a)}" y2="${78+86*Math.sin(a)}"/>`;}).join('')}</g>
+<!-- Cumulus clouds — super detailed -->
+${[[[175,98,138,52],[262,78,108,44],[122,118,90,36],[318,108,82,32],[200,145,128,22]],
+   [[548,84,142,54],[648,65,112,46],[508,108,96,38],[730,95,86,33],[600,130,132,22]],
+   [[1100,118,105,38],[1060,102,85,33],[1145,132,75,28]]].map((cloud,ci)=>cloud.map(([cx,cy,rx,ry])=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${ci===1?'#f8fcff':'#fff'}" opacity="${.88+ci*.04}"/>`).join('')).join('')}
+<!-- Cloud shadow lines -->
+<ellipse cx="210" cy="150" rx="138" ry="22" fill="#b0cce0" opacity=".16"/>
+<ellipse cx="600" cy="135" rx="145" ry="24" fill="#b0cce0" opacity=".14"/>
+<!-- GROUND -->
+<rect y="455" width="1200" height="245" fill="url(#g7gr)"/>
+<ellipse cx="600" cy="455" rx="640" ry="26" fill="#409028"/>
+<!-- Rich grass — 3 layers -->
+<g fill="#38a025" opacity=".58">${Array.from({length:70},(_,i)=>{const x=i*17+4;const h=14+Math.sin(i*2.3)*8;return`<path d="M${x},458 Q${x+2},${458-h} ${x+4},458"/>`;}).join('')}</g>
+<g fill="#50b838" opacity=".5">${Array.from({length:45},(_,i)=>{const x=i*27+6;const h=19+Math.sin(i*1.7)*10;return`<path d="M${x},457 Q${x+3},${457-h} ${x+6},457"/><path d="M${x+6},457 Q${x+9},${457-h-5} ${x+12},457"/>`;}).join('')}</g>
+<!-- WILDFLOWERS — dense, 45 flowers -->
+${Array.from({length:45},(_,i)=>{
+  const x=18+i*26+Math.sin(i*1.8)*10;const y=452+Math.cos(i*2.2)*14;
+  const palettes=[['#ff3355','#ff6688'],['#ff8833','#ffaa66'],['#ffee22','#fff088'],['#ff44cc','#ff88ee'],['#8844ff','#aa88ff'],['#44aaff','#88ccff'],['#ff5566','#ff8899']];
+  const [pc,ph]=palettes[i%7];
+  return`<line x1="${x}" y1="${y}" x2="${x+Math.sin(i)}" y2="${y-13}" stroke="#2a7818" stroke-width="1.4"/>
+<circle cx="${x+Math.sin(i)}" cy="${y-15}" r="${4+Math.sin(i*2)*1.5}" fill="${pc}" opacity=".85"/>
+<circle cx="${x+Math.sin(i)}" cy="${y-15}" r="${2+Math.sin(i*2)*.8}" fill="${ph}" opacity=".55"/>`;
+}).join('')}
+<!-- PICNIC BLANKET — hyper detailed gingham -->
+<rect x="325" y="452" width="550" height="235" fill="#e8d8b0" rx="12"/>
+<!-- Gingham squares — fine grid -->
+<g opacity=".15">${Array.from({length:12},(_,i)=>`<rect x="325" y="${452+i*20}" width="550" height="20" fill="#c07830"/>`).join('')}${Array.from({length:28},(_,i)=>`<rect x="${325+i*20}" y="452" width="20" height="235" fill="#c07830"/>`).join('')}</g>
+<!-- Blanket border -->
+<rect x="325" y="452" width="550" height="235" fill="none" stroke="#b89050" stroke-width="4" rx="12" opacity=".5"/>
+<!-- Fringe -->
+${Array.from({length:28},(_,i)=>`<rect x="${328+i*19}" y="682" width="10" height="18" rx="5" fill="#c8a860" opacity=".65"/>`).join('')}
+${Array.from({length:28},(_,i)=>`<rect x="${328+i*19}" y="442" width="10" height="16" rx="5" fill="#c8a860" opacity=".55" transform="rotate(180,${333+i*19},450)"/>`).join('')}
+<!-- PICNIC FOOD — super detailed -->
+<!-- Wicker basket -->
+<g transform="translate(690,465)">
+  <ellipse cx="0" cy="50" rx="70" ry="24" fill="#9a7848"/>
+  <rect x="-70" y="8" width="140" height="44" fill="#a88050" rx="5"/>
+  <ellipse cx="0" cy="8" rx="70" ry="20" fill="#b89060" opacity=".92"/>
+  <!-- Weave pattern -->
+  <g stroke="#8a6838" stroke-width="1.5" opacity=".58">${Array.from({length:9},(_,i)=>`<line x1="${-68+i*17}" y1="8" x2="${-68+i*17}" y2="52"/>`).join('')}${Array.from({length:5},(_,i)=>`<line x1="-70" y1="${16+i*9}" x2="70" y2="${16+i*9}"/>`).join('')}</g>
+  <!-- Handle -->
+  <path d="M-54,8 Q0,-46 54,8" fill="none" stroke="#6a4828" stroke-width="9"  stroke-linecap="round"/>
+  <path d="M-54,8 Q0,-46 54,8" fill="none" stroke="#8a6040" stroke-width="4"  stroke-linecap="round" opacity=".4"/>
+  <!-- Clasp -->
+  <rect x="-7" y="0" width="14" height="18" fill="#c8a030" rx="4"/>
+  <circle cx="0" cy="9" r="4" fill="#e8c040"/>
+</g>
+<!-- Baguette -->
+<g transform="translate(430,568) rotate(-16)">
+  <ellipse cx="0" cy="0" rx="100" ry="17" fill="#d4a038"/>
+  <ellipse cx="0" cy="0" rx="100" ry="17" fill="none" stroke="#b88020" stroke-width="1" opacity=".5"/>
+  <!-- Score cuts -->
+  <g stroke="#b88020" stroke-width="2.2" opacity=".62">${Array.from({length:8},(_,i)=>`<line x1="${-76+i*22}" y1="-7" x2="${-64+i*22}" y2="7"/>`).join('')}</g>
+  <!-- Crust highlight -->
+  <ellipse cx="-22" cy="-5" rx="32" ry="6" fill="#e8c050" opacity=".28"/>
+  <!-- Ends -->
+  <ellipse cx="-100" cy="0" rx="9" ry="17" fill="#c49030"/>
+  <ellipse cx="100"  cy="0" rx="9" ry="17" fill="#c49030"/>
+</g>
+<!-- Cheese board -->
+<rect x="375" y="535" width="120" height="55" fill="#c8a838" rx="4" opacity=".88"/>
+<rect x="375" y="535" width="120" height="55" fill="none" stroke="#a88820" stroke-width="1.5" rx="4" opacity=".5"/>
+<!-- Cheese wedge on board -->
+<polygon points="385,542 475,542 490,585 370,585" fill="#f0d040" opacity=".92"/>
+${Array.from({length:4},(_,i)=>`<ellipse cx="${400+i*15}" cy="${558+Math.sin(i)*5}" rx="${6+i}" ry="${4+i*.5}" fill="#d8b820" opacity=".45"/>`).join('')}
+<rect x="368" y="578" width="125" height="8" fill="#c8a020" opacity=".65" rx="2"/>
+<!-- Apple -->
+<circle cx="526" cy="492" r="24" fill="#c82020" opacity=".93"/>
+<ellipse cx="519" cy="483" rx="8" ry="10" fill="#e03030" opacity=".45"/>
+<ellipse cx="517" cy="482" rx="3.5" ry="5" fill="#f04040" opacity=".35"/>
+<line x1="526" y1="468" x2="528" y2="456" stroke="#3a2010" stroke-width="2.8" stroke-linecap="round"/>
+<path d="M528,456 Q540,450 535,463" fill="#2a7818" opacity=".82"/>
+<!-- Grapes -->
+<g transform="translate(566,518)">
+${Array.from({length:15},(_,i)=>{const col=[0,1,2,3,2,1,0,1,2,3,2,1,0,1,2];const row=[0,0,0,0,1,1,1,1,2,2,2,3,3,4,4];return`<circle cx="${col[i]*14-20}" cy="${-row[i]*13}" r="9" fill="#6828a0" opacity=".9"/>
+<circle cx="${col[i]*14-16}" cy="${-row[i]*13-4}" r="3.5" fill="#a060d0" opacity=".4"/>`;}).join('')}
+<line x1="8" y1="-56" x2="12" y2="-68" stroke="#2a7818" stroke-width="1.8"/>
+<path d="M12,-68 Q22,-62 16,-52" fill="#2a7818" opacity=".78"/>
+</g>
+<!-- Wine bottle -->
+<g transform="translate(490,458)">
+  <rect x="-8" y="0" width="16" height="52" fill="#2a5818" rx="2"/>
+  <rect x="-6" y="-18" width="12" height="20" fill="#2a5818" rx="6 6 0 0"/>
+  <rect x="-5" y="-24" width="10" height="8"  fill="#3a3a3a" rx="2"/>
+  <ellipse cx="0" cy="26" rx="7" ry="4" fill="#2a7818" opacity=".4"/>
+  <!-- Label -->
+  <rect x="-7" y="8" width="14" height="22" fill="#e8e0c0" rx="1"/>
+  <line x1="-5" y1="14" x2="5" y2="14" stroke="#a09060" stroke-width=".8"/>
+  <line x1="-4" y1="18" x2="4" y2="18" stroke="#a09060" stroke-width=".6"/>
+  <line x1="-3" y1="22" x2="3" y2="22" stroke="#a09060" stroke-width=".6"/>
+</g>
+<!-- Wine glass -->
+<g transform="translate(514,460)" fill="#c8e8f8" opacity=".78">
+  <polygon points="-8,0 8,0 5,42 -5,42"/>
+  <rect x="-5" y="40" width="10" height="18"/>
+  <rect x="-14" y="56" width="28" height="5" rx="2"/>
+  <ellipse cx="0" cy="28" rx="7" ry="4" fill="#c04858" opacity=".48"/>
+  <ellipse cx="-3" cy="18" rx="3" ry="5" fill="#d8eef8" opacity=".35"/>
+</g>
+
+<!-- ANT TRAIL to food -->
+<path d="M600,700 Q580,650 540,610 Q500,570 460,550 Q430,536 395,538" fill="none" stroke="#2a1808" stroke-width=".5" stroke-dasharray="2,3" opacity=".38"/>
+${Array.from({length:10},(_,i)=>{const t=i/9;const x=600-200*t+Math.sin(i*2)*6;const y=700-162*t+Math.cos(i*1.5)*5;return`<ellipse cx="${x}" cy="${y}" rx="2.8" ry="1.6" fill="#2a1808" opacity=".5" transform="rotate(${i*18},${x},${y})"/>`;}).join('')}
+<!-- Butterfly landing on baguette -->
+<g transform="translate(436,556) rotate(-8)">
+  <ellipse cx="-14" cy="0" rx="18" ry="11" fill="#e06030" opacity=".78"/>
+  <ellipse cx="14" cy="0" rx="18" ry="11" fill="#e06030" opacity=".78"/>
+  <ellipse cx="-10" cy="5" rx="10" ry="7" fill="#f08048" opacity=".45"/>
+  <ellipse cx="10" cy="5" rx="10" ry="7" fill="#f08048" opacity=".45"/>
+  <line x1="-2" y1="-8" x2="-2" y2="8" stroke="#3a2010" stroke-width="1.8"/>
+  <line x1="-2" y1="-8" x2="-7" y2="-16" stroke="#3a2010" stroke-width="1"/>
+  <line x1="-2" y1="-8" x2="3" y2="-16" stroke="#3a2010" stroke-width="1"/>
+</g>
+<!-- Shadow of large tree (off screen) -->
+<path d="M0,454 Q200,462 400,456 Q600,450 800,456 Q1000,462 1200,454" fill="#3a8020" opacity=".06"/>
+<!-- Ladybug on blanket -->
+<g transform="translate(680,538)">
+  <ellipse cx="0" cy="0" rx="8" ry="6" fill="#d02020" opacity=".9"/>
+  <ellipse cx="0" cy="0" rx="8" ry="3" fill="#1a1a1a" opacity=".45"/>
+  <line x1="0" y1="-6" x2="0" y2="-12" stroke="#1a1a1a" stroke-width="1"/>
+  <circle cx="0" cy="-12" r="3.5" fill="#1a1a1a" opacity=".8"/>
+  ${[[-4,-2],[4,-2],[-3,2],[3,2]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.5" fill="#1a0808" opacity=".9"/>`).join('')}
+  <line x1="0" y1="-3" x2="0" y2="3" stroke="#9a1010" stroke-width=".8" opacity=".5"/>
+</g>
+<!-- Honey jar -->
+<g transform="translate(628,560)">
+  <ellipse cx="0" cy="14" rx="16" ry="6" fill="#c89020" opacity=".85"/>
+  <rect x="-16" y="-10" width="32" height="26" fill="#e8b030" rx="4"/>
+  <ellipse cx="0" cy="-10" rx="16" ry="6" fill="#f0c040" opacity=".92"/>
+  <rect x="-10" y="-18" width="20" height="10" fill="#d8a028" rx="4"/>
+  <!-- Honey drip -->
+  <path d="M8,-10 Q10,4 8,10" fill="none" stroke="#d8a020" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+  <!-- Label -->
+  <rect x="-12" y="-2" width="24" height="16" fill="#fff8e0" rx="2" opacity=".75"/>
+  <line x1="-9" y1="3" x2="9" y2="3" stroke="#d0a020" stroke-width=".9" opacity=".5"/>
+  <line x1="-8" y1="7" x2="8" y2="7" stroke="#d0a020" stroke-width=".8" opacity=".4"/>
+</g>
+<!-- Book open on blanket -->
+<g transform="translate(505,616) rotate(-5)">
+  <rect x="-42" y="-12" width="42" height="28" fill="#e8dcc0" rx="2"/>
+  <rect x="0" y="-12" width="42" height="28" fill="#f0e8d0" rx="2"/>
+  <line x1="0" y1="-12" x2="0" y2="16" stroke="#8a6840" stroke-width="2"/>
+  ${Array.from({length:4},(_,i)=>`<line x1="${-38}" y1="${-5+i*6}" x2="${-4}" y2="${-5+i*6}" stroke="#9a8050" stroke-width=".7" opacity=".4"/>`).join('')}
+  ${Array.from({length:4},(_,i)=>`<line x1="${4}" y1="${-5+i*6}" x2="${38}" y2="${-5+i*6}" stroke="#9a8050" stroke-width=".7" opacity=".4"/>`).join('')}
+</g>
+<!-- Thermos -->
+<g transform="translate(465,540)">
+  <rect x="-9" y="-28" width="18" height="48" fill="#4878a8" rx="4"/>
+  <rect x="-9" y="-36" width="18" height="10" fill="#3868a0" rx="3"/>
+  <rect x="-11" y="-8" width="22" height="6" fill="#5888b8" opacity=".5"/>
+  <ellipse cx="0" cy="18" rx="9" ry="4" fill="#3868a0" opacity=".6"/>
+</g>
+<!-- KITE — detailed diamond with tail -->
+<polygon points="652,80 605,148 652,208 699,148" fill="#d82828" opacity=".9"/>
+<polygon points="652,80 605,148 652,146" fill="#e04838" opacity=".65"/>
+<polygon points="652,146 699,148 652,208" fill="#c01818" opacity=".65"/>
+<!-- Kite spars -->
+<line x1="605" y1="148" x2="699" y2="148" stroke="#8a4820" stroke-width="2.2" opacity=".58"/>
+<line x1="652" y1="80"  x2="652" y2="208" stroke="#8a4820" stroke-width="2.2" opacity=".58"/>
+<!-- Kite tail -->
+<path d="M652,208 Q638,262 650,316 Q662,368 645,408 Q630,445 642,470" fill="none" stroke="#9a8060" stroke-width="1.8" stroke-dasharray="5,4" opacity=".62"/>
+<!-- Bows -->
+${[[645,252,-18],[655,298,12],[641,344,-14],[648,388,8]].map(([x,y,rot])=>`<ellipse cx="${x}" cy="${y}" rx="10" ry="5" fill="#e82828" opacity=".72" transform="rotate(${rot},${x},${y})"/>`).join('')}
+<!-- Kite string going to hand off-screen -->
+<path d="M652,208 Q700,340 740,430" fill="none" stroke="#8a7858" stroke-width="1.2" opacity=".45"/>
+`,egg:{x:362,y:536,w:28,h:36,color:'#c8a060',stroke:'#a87840',opacity:.33,pattern:'stripes-light'}},
+
+// ══ 8 · RYBNÍK S LEKNÍNY ══════════════════════════════════════
+{name:"Rybník s lekníny",svg:`
+<defs>
+  <linearGradient id="g8sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c0ecd0"/><stop offset="100%" stop-color="#e0f8e8"/></linearGradient>
+  <linearGradient id="g8pond" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#166040"/><stop offset="100%" stop-color="#083420"/></linearGradient>
+  <radialGradient id="g8sky_r" cx="50%" cy="50%"><stop offset="0%" stop-color="#58b8f0" stop-opacity=".18"/><stop offset="100%" stop-color="#58b8f0" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1200" height="700" fill="url(#g8sky)"/>
+<!-- Layered rolling hills -->
+<ellipse cx="170"  cy="490" rx="400" ry="235" fill="#6ab058" opacity=".92"/>
+<ellipse cx="600"  cy="528" rx="520" ry="215" fill="#58a048" opacity=".88"/>
+<ellipse cx="1030" cy="485" rx="410" ry="240" fill="#62a850" opacity=".9"/>
+<!-- Distant hedge rows -->
+<g fill="#3a7828" opacity=".5">${Array.from({length:8},(_,i)=>`<ellipse cx="${i*160+60}" cy="468" rx="90" ry="28"/>`).join('')}</g>
+<!-- Ground texture on hills -->
+<g fill="#4a9838" opacity=".42">${Array.from({length:38},(_,i)=>{const x=i*32+6;return`<path d="M${x},470 Q${x+3},${460-Math.sin(i*2)*8} ${x+6},470"/>`;}).join('')}</g>
+<!-- LEFT WEEPING WILLOW — exhaustive detail -->
+<line x1="215" y1="625" x2="215" y2="275" stroke="#5a4028" stroke-width="12"/>
+<!-- Bark lines -->
+<g stroke="#4a3018" stroke-width="1" opacity=".5">${Array.from({length:8},(_,i)=>`<path d="M215,${290+i*42} Q221,${295+i*42} 215,${305+i*42}"/>`).join('')}</g>
+<!-- Willow branches — 12 cascading -->
+${Array.from({length:12},(_,i)=>{const a=(i/11-0.5)*1.6;const endX=215+Math.sin(a)*130;const endY=275+Math.cos(Math.abs(a))*.3*350+180;return`<path d="M215,275 Q${215+Math.sin(a)*60},${330} ${endX},${endY}" fill="none" stroke="#3a7828" stroke-width="${3-i*.12}" opacity=".72"/>
+<path d="M215,275 Q${215+Math.sin(a)*60},${330} ${endX},${endY}" fill="none" stroke="#52a040" stroke-width="1.2" opacity=".4"/>`;}).join('')}
+<!-- Willow leaves clusters -->
+${Array.from({length:20},(_,i)=>{const t=i/19;const bx=215+Math.sin(t*2.5-0.8)*80;const by=275+t*230;return`<ellipse cx="${bx}" cy="${by}" rx="${7+Math.sin(i)*2}" ry="${16+Math.sin(i*1.3)*5}" fill="#3c8828" opacity=".6" transform="rotate(${-22+t*38},${bx},${by})"/>`;}).join('')}
+<!-- RIGHT WILLOW -->
+<line x1="988" y1="615" x2="988" y2="262" stroke="#5a4028" stroke-width="12"/>
+${Array.from({length:11},(_,i)=>{const a=(i/10-0.5)*1.5;const endX=988+Math.sin(a)*125;const endY=262+Math.cos(Math.abs(a))*.3*340+175;return`<path d="M988,262 Q${988+Math.sin(a)*55},${318} ${endX},${endY}" fill="none" stroke="#3a7828" stroke-width="${3-i*.12}" opacity=".72"/>`;}).join('')}
+${Array.from({length:18},(_,i)=>{const t=i/17;const bx=988+Math.sin(t*2.4-0.7)*78;const by=262+t*225;return`<ellipse cx="${bx}" cy="${by}" rx="${7+Math.sin(i)*2}" ry="${15+Math.sin(i*1.3)*5}" fill="#3c8828" opacity=".58" transform="rotate(${20-t*36},${bx},${by})"/>`;}).join('')}
+<!-- CATTAIL REEDS — left & right -->
+${[[145,18],[165,16],[183,14],[200,17],[218,15]].concat([[1000,18],[1018,16],[1036,15],[1054,17],[1072,14]]).map(([x,h])=>`
+<line x1="${x}" y1="645" x2="${x}" y2="${418-h*8}" stroke="#6a4a28" stroke-width="${2.2-h*.02}"/>
+<ellipse cx="${x}" cy="${418-h*8}" rx="5" ry="${h}" fill="#8a5a28" opacity=".88"/>
+<line x1="${x}" y1="${430-h*8}" x2="${x+8}" y2="${440-h*8}" stroke="#7a8828" stroke-width="1.5"/>
+<ellipse cx="${x+14}" cy="${442-h*8}" rx="4" ry="10" fill="#9a8028" opacity=".68"/>
+`).join('')}
+<!-- POND — ellipse with complex shader -->
+<ellipse cx="600" cy="492" rx="450" ry="192" fill="url(#g8pond)" opacity=".94"/>
+<ellipse cx="600" cy="492" rx="450" ry="192" fill="url(#g8sky_r)"/>
+<!-- Reflected willow green streaks -->
+<ellipse cx="220" cy="540" rx="80" ry="30" fill="#1c5830" opacity=".2" transform="scaleY(-1) translate(0,-1080)"/>
+<!-- Pond surface shimmer -->
+${Array.from({length:18},(_,i)=>{const y=428+i*16;const wr=Math.sqrt(Math.max(0,1-Math.pow((y-492)/192,2)))*450;if(wr<5)return'';return`<path d="M${600-wr},${y} Q${600},${y-5} ${600+wr},${y}" fill="none" stroke="#228858" stroke-width="${1.1-i*.04}" opacity="${.28-i*.01}"/>`;}).join('')}
+<!-- LILY PADS — 11 pads, detailed -->
+${[
+  {cx:348,cy:498,rx:55,ry:34},{cx:458,cy:528,rx:60,ry:38},{cx:552,cy:508,rx:50,ry:32},
+  {cx:644,cy:518,rx:57,ry:36},{cx:748,cy:500,rx:52,ry:33},{cx:834,cy:524,rx:48,ry:30},
+  {cx:518,cy:468,rx:44,ry:28},{cx:680,cy:474,rx:46,ry:29},{cx:588,cy:550,rx:42,ry:26},
+  {cx:420,cy:468,rx:38,ry:24},{cx:760,cy:545,rx:36,ry:22}
+].map(({cx,cy,rx,ry},idx)=>`
+<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#1e6820" opacity=".9"/>
+<!-- Veins -->
+<g stroke="#165818" stroke-width=".7" opacity=".5">
+  <line x1="${cx}" y1="${cy-ry}" x2="${cx}" y2="${cy+ry}"/>
+  ${Array.from({length:7},(_,i)=>{const a=(i-3)*18*Math.PI/180;return`<line x1="${cx}" y1="${cy}" x2="${cx+rx*Math.cos(a+Math.PI/2)*.9}" y2="${cy+ry*Math.sin(a+Math.PI/2)*.9}"/>`;}).join('')}
+</g>
+<!-- Notch -->
+<polygon points="${cx},${cy-ry} ${cx-9},${cy-12} ${cx+9},${cy-12}" fill="url(#g8pond)" opacity=".88"/>
+<!-- Pad water droplets -->
+${Array.from({length:3},(_,i)=>`<circle cx="${cx-rx*.3+i*rx*.3}" cy="${cy-ry*.2}" r="2.5" fill="#2a9858" opacity=".4"/>`).join('')}
+<!-- Lily pad aging spots -->
+<circle cx="${cx+rx*.25}" cy="${cy+ry*.2}" r="${rx*.12}" fill="#155818" opacity=".35"/>
+`).join('')}
+<!-- WATER LILY FLOWERS — 6 blooms -->
+${[
+  {cx:348,cy:494,r:15,outer:'#fff9e0',inner:'#ffe058',petals:10},
+  {cx:552,cy:503,r:16,outer:'#fff',   inner:'#ffe090',petals:10},
+  {cx:748,cy:495,r:14,outer:'#ffb8d0',inner:'#ff80a8',petals:9},
+  {cx:458,cy:523,r:13,outer:'#fff9f0',inner:'#ffd060',petals:9},
+  {cx:834,cy:519,r:12,outer:'#e8e8ff',inner:'#c0c8ff',petals:8},
+  {cx:518,cy:464,r:11,outer:'#fff8e0',inner:'#f0d050',petals:8}
+].map(({cx,cy,r,outer,inner,petals})=>`
+${Array.from({length:petals},(_,i)=>{const a=i*(360/petals)*Math.PI/180;return`<ellipse cx="${cx+Math.cos(a)*r*.8}" cy="${cy+Math.sin(a)*r*.8}" rx="${r*.42}" ry="${r*.72}" fill="${outer}" opacity=".92" transform="rotate(${i*(360/petals)},${cx+Math.cos(a)*r*.8},${cy+Math.sin(a)*r*.8})"/>`;}).join('')}
+${Array.from({length:Math.floor(petals*.7)},(_,i)=>{const a=(i*(360/Math.floor(petals*.7))+18)*Math.PI/180;return`<ellipse cx="${cx+Math.cos(a)*r*.38}" cy="${cy+Math.sin(a)*r*.38}" rx="${r*.26}" ry="${r*.52}" fill="${outer}" opacity=".96" transform="rotate(${i*(360/Math.floor(petals*.7))+18},${cx+Math.cos(a)*r*.38},${cy+Math.sin(a)*r*.38})"/>`;}).join('')}
+<circle cx="${cx}" cy="${cy}" r="${r*.36}" fill="${inner}"/>
+${Array.from({length:petals},(_,i)=>{const a=i*(360/petals)*Math.PI/180;return`<line x1="${cx}" y1="${cy}" x2="${cx+Math.cos(a)*r*.28}" y2="${cy+Math.sin(a)*r*.28}" stroke="#c0a020" stroke-width="1" opacity=".65"/>`;}).join('')}
+<circle cx="${cx}" cy="${cy}" r="${r*.14}" fill="#a08010"/>
+`).join('')}
+<!-- FROG — hyper detailed -->
+<g transform="translate(460,522)">
+  <ellipse cx="0" cy="9" rx="15" ry="10" fill="#2eaa38"/>
+  <ellipse cx="0" cy="3" rx="11" ry="10" fill="#3ec848"/>
+  <ellipse cx="0" cy="6" rx="8"  ry="6"  fill="#48e858" opacity=".4"/>
+  <!-- Eye stalks -->
+  <circle cx="-7" cy="-7"  r="5.5" fill="#3ec040"/>
+  <circle cx="7"  cy="-7"  r="5.5" fill="#3ec040"/>
+  <circle cx="-7" cy="-7"  r="3.5" fill="#0a1006"/>
+  <circle cx="7"  cy="-7"  r="3.5" fill="#0a1006"/>
+  <circle cx="-6" cy="-8"  r="1.2" fill="#fff" opacity=".7"/>
+  <circle cx="8"  cy="-8"  r="1.2" fill="#fff" opacity=".7"/>
+  <!-- Throat pouch -->
+  <ellipse cx="0" cy="5" rx="7" ry="5" fill="#50e060" opacity=".45"/>
+  <!-- Toes -->
+  <path d="M-15,16 Q-21,22 -26,18 Q-20,13 -15,16" fill="#2eaa38"/>
+  <path d="M-17,13 Q-24,16 -22,10" fill="#268a30" opacity=".7"/>
+  <path d="M15,16 Q21,22 26,18 Q20,13 15,16" fill="#2eaa38"/>
+</g>
+<!-- DUCK FAMILY -->
+<g transform="translate(762,464)">
+  <ellipse cx="0" cy="9" rx="24" ry="15" fill="#f0f0e8"/>
+  <ellipse cx="18" cy="3" rx="14" ry="11" fill="#f0f0e8"/>
+  <circle cx="28" cy="-2" r="8" fill="#286c30"/>
+  <ellipse cx="35" cy="0" rx="9" ry="4.5" fill="#f07818"/>
+  <circle cx="32" cy="-4" r="2.2" fill="#0a0a14"/>
+  <!-- Wing detail -->
+  <ellipse cx="0" cy="9" rx="24" ry="7" fill="none" stroke="#d8d8d0" stroke-width="1" opacity=".5"/>
+  ${Array.from({length:5},(_,i)=>`<path d="M${-12+i*5},4 Q${-9+i*5},12 ${-12+i*5},18" fill="none" stroke="#d0d0c8" stroke-width=".8" opacity=".4"/>`).join('')}
+</g>
+<!-- Ducklings -->
+${[[800,475],[780,482],[818,482]].map(([x,y])=>`<ellipse cx="${x}" cy="${y+5}" rx="12" ry="8" fill="#f8f0b0"/><circle cx="${x+9}" cy="${y}" r="6" fill="#f8f0b0"/><ellipse cx="${x+13}" cy="${y+1}" rx="5" ry="3" fill="#e09020"/>`).join('')}
+
+<!-- HERON standing in shallows -->
+<g transform="translate(305,428)" opacity=".78">
+  <!-- Legs -->
+  <line x1="0" y1="40" x2="-5" y2="72" stroke="#9a9870" stroke-width="3.5"/>
+  <line x1="8" y1="40" x2="12" y2="72" stroke="#9a9870" stroke-width="3.5"/>
+  <!-- Feet -->
+  <path d="M-5,72 Q-12,75 -18,73" fill="none" stroke="#9a9870" stroke-width="2"/>
+  <path d="M-5,72 Q-5,78 -8,82" fill="none" stroke="#9a9870" stroke-width="2"/>
+  <path d="M12,72 Q18,75 24,73" fill="none" stroke="#9a9870" stroke-width="2"/>
+  <!-- Body -->
+  <ellipse cx="0" cy="18" rx="18" ry="28" fill="#e8e8e0"/>
+  <ellipse cx="0" cy="8"  rx="14" ry="16" fill="#f0f0e8"/>
+  <!-- Wing detail -->
+  <ellipse cx="0" cy="18" rx="18" ry="20" fill="none" stroke="#d0d0c8" stroke-width="1" opacity=".5"/>
+  ${Array.from({length:5},(_,i)=>`<path d="M${-16+i*5},10 Q${-14+i*5},22 ${-16+i*5},32" fill="none" stroke="#c8c8c0" stroke-width="1" opacity=".4"/>`).join('')}
+  <!-- Neck -->
+  <path d="M0,-10 Q8,-28 4,-52" fill="none" stroke="#e0e0d8" stroke-width="12" stroke-linecap="round"/>
+  <path d="M0,-10 Q8,-28 4,-52" fill="none" stroke="#f0f0e8" stroke-width="7" stroke-linecap="round" opacity=".6"/>
+  <!-- Head -->
+  <circle cx="4" cy="-56" r="11" fill="#e8e8e0"/>
+  <!-- Black head stripe -->
+  <path d="M-5,-62 Q4,-68 13,-62" fill="#1a1a28" opacity=".7"/>
+  <!-- Beak -->
+  <polygon points="14,-54 32,-52 14,-50" fill="#e8b830"/>
+  <!-- Eye -->
+  <circle cx="12" cy="-56" r="3.5" fill="#f0d820"/>
+  <circle cx="13" cy="-56" r="2" fill="#1a1818"/>
+  <!-- Plumes -->
+  <path d="M0,22 Q-8,38 -14,52" fill="none" stroke="#e0e0d8" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+  <path d="M2,24 Q-5,42 -10,56" fill="none" stroke="#e0e0d8" stroke-width="2" stroke-linecap="round" opacity=".4"/>
+</g>
+<!-- Reflection of heron in water -->
+<g transform="translate(305,500) scale(1,-0.4)" opacity=".15">
+  <ellipse cx="0" cy="18" rx="18" ry="28" fill="#a8a8a0"/>
+  <path d="M0,-10 Q8,-28 4,-52" fill="none" stroke="#b0b0a8" stroke-width="12" stroke-linecap="round"/>
+</g>
+<!-- Turtle on log -->
+<g transform="translate(862,478)" opacity=".75">
+  <ellipse cx="0" cy="0" rx="18" ry="13" fill="#4a6a28"/>
+  <!-- Shell pattern -->
+  <ellipse cx="0" cy="0" rx="14" ry="10" fill="#3a5820" opacity=".5"/>
+  ${Array.from({length:5},(_,i)=>{const a=i*72*Math.PI/180;return`<ellipse cx="${Math.cos(a)*7}" cy="${Math.sin(a)*5}" rx="5" ry="4" fill="#4a6a28" stroke="#3a5820" stroke-width=".8" opacity=".6"/>`;}).join('')}
+  <!-- Head -->
+  <circle cx="18" cy="-2" r="7" fill="#5a7830"/>
+  <!-- Eye -->
+  <circle cx="21" cy="-4" r="2.5" fill="#1a2010"/>
+  <circle cx="22" cy="-5" r="1" fill="#fff" opacity=".6"/>
+  <!-- Legs -->
+  ${[[-8,10,20],[8,10,20],[-8,-10,20],[8,-10,20]].map(([lx,ly,rot])=>`<ellipse cx="${lx}" cy="${ly}" rx="6" ry="4" fill="#5a7830" transform="rotate(${rot},${lx},${ly})"/>`).join('')}
+  <!-- Tail -->
+  <path d="M-18,0 Q-26,3 -28,0" fill="none" stroke="#5a7830" stroke-width="4" stroke-linecap="round"/>
+</g>
+<!-- Water strider insects -->
+${[[488,442],[512,438],[534,445]].map(([x,y])=>`
+<g transform="translate(${x},${y})" opacity=".65">
+  <ellipse cx="0" cy="0" rx="4" ry="2" fill="#2a2018"/>
+  ${Array.from({length:3},(_,i)=>{const side=i%2===0?-1:1;return`<line x1="${side*2}" y1="${-1+i*.5}" x2="${side*(10+i*3)}" y2="${-2+i*2}" stroke="#3a3028" stroke-width=".8"/>`;}).join('')}
+  ${Array.from({length:3},(_,i)=>{const side=i%2===0?1:-1;return`<line x1="${side*2}" y1="${-1+i*.5}" x2="${side*(10+i*3)}" y2="${-2+i*2}" stroke="#3a3028" stroke-width=".8"/>`;}).join('')}
+  <!-- Ripples around legs -->
+  ${Array.from({length:3},(_,i)=>{const side=i%2===0?-1:1;return`<ellipse cx="${side*(10+i*3)}" cy="${-1+i*2}" rx="3" ry="1.5" fill="none" stroke="#4a9878" stroke-width=".6" opacity=".4"/>`;}).join('')}
+</g>`).join('')}
+<!-- Reflection cloud in pond -->
+<ellipse cx="550" cy="505" rx="90" ry="18" fill="#e8f0e8" opacity=".12" transform="rotate(-5,550,505)"/>
+<ellipse cx="700" cy="488" rx="70" ry="14" fill="#e8f0e8" opacity=".1"/>
+<!-- FISH visible under water -->
+${[[380,520],[620,540],[720,510]].map(([x,y])=>`
+<g opacity=".3">
+  <ellipse cx="${x}" cy="${y}" rx="18" ry="7" fill="#3a9860"/>
+  <polygon points="${x-18},${y-2} ${x-28},${y-8} ${x-28},${y+8}" fill="#2a7850"/>
+  <circle cx="${x+12}" cy="${y-2}" r="2.5" fill="#0a1808"/>
+</g>`).join('')}
+<!-- DRAGONFLY — detailed segmented -->
+<g transform="translate(502,394)">
+  ${Array.from({length:6},(_,i)=>`<ellipse cx="0" cy="${-10+i*8}" rx="${3.5-i*.25}" ry="4.5" fill="${i%2===0?'#0070a0':'#0090c8'}"/>`).join('')}
+  <ellipse cx="0" cy="-18" rx="4.5" ry="5" fill="#0090c8"/>
+  <circle cx="-3" cy="-20" r="2"   fill="#0a0a14"/>
+  <circle cx="3"  cy="-20" r="2"   fill="#0a0a14"/>
+  <!-- Wings -->
+  <ellipse cx="-24" cy="-8" rx="26" ry="8" fill="#88e0f0" opacity=".64" transform="rotate(-10,-24,-8)"/>
+  <ellipse cx="24"  cy="-8" rx="26" ry="8" fill="#88e0f0" opacity=".64" transform="rotate(10,24,-8)"/>
+  <ellipse cx="-20" cy="2"  rx="20" ry="6" fill="#88e0f0" opacity=".54" transform="rotate(-5,-20,2)"/>
+  <ellipse cx="20"  cy="2"  rx="20" ry="6" fill="#88e0f0" opacity=".54" transform="rotate(5,20,2)"/>
+  <!-- Wing venation -->
+  <g stroke="#60c8e0" stroke-width=".6" opacity=".4"><line x1="-2" y1="-8" x2="-48" y2="-10"/><line x1="-2" y1="-8" x2="-42" y2="2"/></g>
+</g>
+`,egg:{x:678,y:460,w:26,h:34,color:'#186820',stroke:'#0e4816',opacity:.35,pattern:'none'}},
+
+// ══ 9 · PODZIMNÍ PARK ════════════════════════════════════════
+{name:"Podzimní park",svg:`
+<defs>
+  <linearGradient id="g9sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f5c880"/><stop offset="45%" stop-color="#fae0a0"/><stop offset="100%" stop-color="#fef5d8"/></linearGradient>
+  <linearGradient id="g9gr"  x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8a6838"/><stop offset="100%" stop-color="#6a4820"/></linearGradient>
+  <linearGradient id="g9pth" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c8a060"/><stop offset="100%" stop-color="#a88040"/></linearGradient>
+  <radialGradient id="g9sun"><stop offset="0%" stop-color="#f8c040" stop-opacity=".52"/><stop offset="100%" stop-color="#f8c040" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1200" height="700" fill="url(#g9sky)"/>
+<!-- Low autumn sun with haze -->
+<circle cx="188" cy="215" r="105" fill="url(#g9sun)"/>
+<circle cx="188" cy="215" r="60"  fill="#f8c030" opacity=".9"/>
+<circle cx="188" cy="215" r="46"  fill="#ffd040" opacity=".88"/>
+<circle cx="188" cy="215" r="34"  fill="#fff8a0" opacity=".5"/>
+<!-- Atmospheric warmth haze -->
+<rect width="1200" height="700" fill="#ffe8c0" opacity=".1"/>
+<!-- GROUND -->
+<rect y="468" width="1200" height="232" fill="url(#g9gr)"/>
+<!-- Soil undulation -->
+<ellipse cx="600" cy="468" rx="660" ry="35" fill="#7a5828"/>
+<!-- AUTUMN LEAF CARPET — 100 leaves -->
+${Array.from({length:100},(_,i)=>{
+  const x=(i*173+31)%1200;const y=462+(i*89+7)%180;
+  const colors=['#d84010','#c02808','#d83818','#e06818','#e89818','#c88018','#e05018','#f0a828'];
+  const c=colors[i%8];const rot=(i*47)%360;const rx=5+Math.sin(i*1.7)*5;const ry=rx*.45;
+  return`<ellipse cx="${x}" cy="${y}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="${c}" opacity="${(.55+Math.sin(i)*.2).toFixed(2)}" transform="rotate(${rot},${x},${y})"/>`;
+}).join('')}
+<!-- Fallen leaves overlapping — second pass -->
+${Array.from({length:50},(_,i)=>{
+  const x=(i*234+89)%1200;const y=468+(i*67+22)%140;
+  const c=i%2===0?'#d04010':'#e07820';const rot=(i*83)%360;
+  return`<ellipse cx="${x}" cy="${y}" rx="${6+Math.cos(i)*3}" ry="${3+Math.sin(i)*1.5}" fill="${c}" opacity=".5" transform="rotate(${rot},${x},${y})"/>`;
+}).join('')}
+<!-- Mid-air falling leaves -->
+${Array.from({length:28},(_,i)=>{const x=25+i*42;const y=260+Math.sin(i*.7)*135;const rot=(i*37)%60-30;const c=i%3===0?'#d84010':i%3===1?'#e07820':'#c02808';return`<ellipse cx="${x}" cy="${y}" rx="${5+Math.sin(i)*2}" ry="${2.5+Math.sin(i*1.3)}" fill="${c}" opacity=".72" transform="rotate(${rot},${x},${y})"/>`;}).join('')}
+<!-- PARK PATH -->
+<path d="M422,468 Q548,458 588,700" fill="url(#g9pth)" opacity=".88"/>
+<path d="M778,468 Q652,458 612,700" fill="url(#g9pth)" opacity=".88"/>
+<!-- Gravel texture -->
+${Array.from({length:24},(_,i)=>`<ellipse cx="${598+Math.sin(i*1.3)*14}" cy="${482+i*8}" rx="${9+Math.sin(i)*3}" ry="${4+Math.sin(i*1.4)*1.5}" fill="#c09858" opacity=".42" transform="rotate(${Math.sin(i)*12},${598},${482+i*8})"/>`).join('')}
+<!-- Path edge leaves -->
+${Array.from({length:12},(_,i)=>`<ellipse cx="${560+Math.sin(i)*22}" cy="${470+i*16}" rx="6.5" ry="2.8" fill="#d04010" opacity=".55" transform="rotate(${i*14},${560+Math.sin(i)*22},${470+i*16})"/>`).join('')}
+<!-- OAK TREES — massive left -->
+<rect x="136" y="182" width="38" height="300" fill="#583a20"/>
+<!-- Bark — realistic texture -->
+<g stroke="#482a10" stroke-width="1.2" opacity=".5">
+  <path d="M136,218 Q155,214 174,220"/><path d="M138,258 Q155,253 172,259"/>
+  <path d="M136,298 Q155,294 174,300"/><path d="M138,338 Q155,333 172,339"/>
+  <path d="M136,378 Q155,374 174,380"/><path d="M140,418 Q155,413 170,419"/>
+  <line x1="147" y1="182" x2="144" y2="482"/><line x1="158" y1="182" x2="162" y2="482"/>
+  <line x1="168" y1="182" x2="165" y2="482"/>
+</g>
+<!-- Root system -->
+<path d="M136,475 Q105,495 82,508"  fill="none" stroke="#583a20" stroke-width="9"  stroke-linecap="round"/>
+<path d="M174,477 Q202,496 224,510" fill="none" stroke="#583a20" stroke-width="8"  stroke-linecap="round"/>
+<path d="M152,480 Q148,512 144,528" fill="none" stroke="#583a20" stroke-width="7"  stroke-linecap="round"/>
+<path d="M162,480 Q168,514 172,530" fill="none" stroke="#583a20" stroke-width="6"  stroke-linecap="round"/>
+<!-- Canopy — 20+ overlapping ellipses for volume -->
+${[
+  [155,182,152,118,'#c84010'],[105,215,115,94,'#b83008'],[202,208,122,98,'#d85018'],
+  [148,162,132,104,'#e06020'],[162,142,118,90,'#f07030'],[130,198,95,78,'#c83010'],
+  [188,178,105,85,'#d04818'],[155,128,108,82,'#e87040'],[118,238,88,72,'#c02808'],
+  [198,225,92,75,'#d84018'],[145,255,82,65,'#c03010']
+].map(([cx,cy,rx,ry,col])=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${col}" opacity=".88"/>`).join('')}
+<!-- Leaf-cluster details -->
+${Array.from({length:22},(_,i)=>{const a=i/22*Math.PI*2;const r=82+Math.sin(i*2)*28;const cx=155+Math.cos(a)*r*.7;const cy=185+Math.sin(a)*r*.56-25;return`<ellipse cx="${cx.toFixed(0)}" cy="${cy.toFixed(0)}" rx="${19+Math.sin(i)*6}" ry="${14+Math.sin(i*1.4)*5}" fill="${['#e05010','#c83008','#f07030','#d85018'][i%4]}" opacity="${(.68+Math.sin(i)*.15).toFixed(2)}"/>`;}).join('')}
+<!-- RIGHT OAK -->
+<rect x="1030" y="172" width="38" height="312" fill="#583a20"/>
+<g stroke="#482a10" stroke-width="1.2" opacity=".5">
+  <path d="M1030,208 Q1049,203 1068,209"/><path d="M1032,248 Q1049,243 1066,249"/>
+  <line x1="1040" y1="172" x2="1037" y2="484"/><line x1="1050" y1="172" x2="1054" y2="484"/>
+</g>
+<path d="M1030,482 Q1002,500 980,514"  fill="none" stroke="#583a20" stroke-width="9"  stroke-linecap="round"/>
+<path d="M1068,484 Q1096,502 1118,516" fill="none" stroke="#583a20" stroke-width="8"  stroke-linecap="round"/>
+${[
+  [1048,172,150,120,'#c84010'],[998,205,118,96,'#b83008'],[1096,198,125,100,'#d85018'],
+  [1040,152,130,106,'#e06020'],[1058,132,120,92,'#f07030'],[1020,228,92,75,'#c02808'],
+  [1085,218,98,80,'#d84018']
+].map(([cx,cy,rx,ry,col])=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${col}" opacity=".88"/>`).join('')}
+<!-- BIRCH TREES -->
+<rect x="378" y="235" width="17" height="252" fill="#f0ece2"/>
+<g fill="#a8a090" opacity=".65">${Array.from({length:9},(_,i)=>`<rect x="379" y="${252+i*26}" width="15" height="9" rx="2"/>`).join('')}</g>
+<ellipse cx="387" cy="235" rx="76" ry="108" fill="#f0c858" opacity=".84"/>
+<ellipse cx="366" cy="265" rx="58" ry="76"  fill="#e8a820" opacity=".74"/>
+<ellipse cx="408" cy="252" rx="62" ry="84"  fill="#f4d060" opacity=".70"/>
+<!-- Birch right -->
+<rect x="806" y="223" width="17" height="265" fill="#f0ece2"/>
+<g fill="#a8a090" opacity=".65">${Array.from({length:9},(_,i)=>`<rect x="807" y="${240+i*26}" width="15" height="9" rx="2"/>`).join('')}</g>
+<ellipse cx="815" cy="223" rx="78" ry="112" fill="#f0c858" opacity=".84"/>
+<ellipse cx="792" cy="255" rx="59" ry="78"  fill="#e8a820" opacity=".74"/>
+<!-- PARK BENCH — ornate cast iron Victorian -->
+<g>
+  <rect x="518" y="432" width="164" height="13" fill="#a08060" rx="3"/>
+  <rect x="518" y="418" width="164" height="11" fill="#b09070" rx="2"/>
+  <rect x="518" y="402" width="164" height="10" fill="#b09070" rx="2"/>
+  <rect x="518" y="416" width="164" height="9"  fill="#c0a078" rx="2"/>
+  <!-- Cast iron ends -->
+  <path d="M534,444 Q526,462 528,484" fill="none" stroke="#484838" stroke-width="8" stroke-linecap="round"/>
+  <path d="M666,444 Q674,462 672,484" fill="none" stroke="#484838" stroke-width="8" stroke-linecap="round"/>
+  <!-- Foot rails -->
+  <line x1="528" y1="484" x2="672" y2="484" stroke="#484838" stroke-width="5"/>
+  <!-- Armrests with scroll ends -->
+  <path d="M518,422 Q508,432 510,448" fill="none" stroke="#484838" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="510" cy="450" r="4" fill="#484838"/>
+  <path d="M682,422 Q692,432 690,448" fill="none" stroke="#484838" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="690" cy="450" r="4" fill="#484838"/>
+  <!-- Seat slat bolts -->
+  ${[530,558,586,614,642,670].map(x=>`<circle cx="${x}" cy="${438}" r="2.5" fill="#686858"/>`).join('')}
+</g>
+<!-- SQUIRREL — hyper detailed -->
+<g transform="translate(694,425)">
+  <!-- Body -->
+  <ellipse cx="0" cy="9" rx="13" ry="10" fill="#b06030"/>
+  <ellipse cx="11" cy="1" rx="9"  ry="10" fill="#c07040"/>
+  <!-- Belly patch -->
+  <ellipse cx="9" cy="5" rx="6" ry="7" fill="#e0b888" opacity=".82"/>
+  <!-- Fluffy tail — multi-layer -->
+  <path d="M0,9 Q-20,-10 -12,-32 Q-4,-46 8,-36 Q14,-26 8,-12 Q5,-3 0,9" fill="#c07040"/>
+  <path d="M0,9 Q-15,-8 -9,-28 Q-2,-40 6,-32 Q10,-24 5,-10" fill="#d08850" opacity=".62"/>
+  <path d="M0,9 Q-18,-8 -10,-30 Q-3,-43 7,-34" fill="none" stroke="#e09858" stroke-width="1.5" opacity=".4"/>
+  <!-- Head -->
+  <circle cx="18" cy="-3" r="10" fill="#c07040"/>
+  <!-- Eye -->
+  <circle cx="23" cy="-5" r="3.5" fill="#1a1a0a"/>
+  <circle cx="24" cy="-6" r="1.2" fill="#fff" opacity=".75"/>
+  <!-- Ear -->
+  <polygon points="18,-12 14,-22 22,-18" fill="#c07040"/>
+  <polygon points="18,-12 15,-20 21,-17" fill="#d09868" opacity=".5"/>
+  <!-- Whiskers -->
+  <g stroke="#d0c0a0" stroke-width=".7" opacity=".6">
+    <line x1="25" y1="-4" x2="36" y2="-6"/><line x1="25" y1="-3" x2="36" y2="-2"/>
+    <line x1="25" y1="-5" x2="36" y2="-8"/>
+  </g>
+  <!-- Paws with acorn -->
+  <ellipse cx="20" cy="7" rx="5" ry="3.5" fill="#b05828"/>
+  <ellipse cx="23" cy="5" rx="4" ry="3"   fill="#b05828"/>
+  <ellipse cx="26" cy="5" rx="7" ry="6"   fill="#c08830"/>
+  <rect x="23"   y="0"  width="7" height="6" fill="#8a5820" rx="1"/>
+  <ellipse cx="26" cy="0" rx="4" ry="2" fill="#6a4010" opacity=".7"/>
+</g>
+
+<!-- FOUNTAIN in park background -->
+<g transform="translate(870,382)" opacity=".62">
+  <!-- Basin -->
+  <ellipse cx="0" cy="48" rx="58" ry="18" fill="#b0a888"/>
+  <ellipse cx="0" cy="44" rx="54" ry="14" fill="#7898b0" opacity=".72"/>
+  <!-- Pedestal -->
+  <rect x="-8" y="12" width="16" height="38" fill="#c0b898" rx="3"/>
+  <!-- Upper basin -->
+  <ellipse cx="0" cy="12" rx="32" ry="10" fill="#b8b098"/>
+  <ellipse cx="0" cy="10" rx="28" ry="8" fill="#6888a8" opacity=".68"/>
+  <!-- Water jets -->
+  <path d="M0,10 Q-18,-8 -22,-25 Q-18,-10 0,10" fill="#88b8d0" opacity=".42"/>
+  <path d="M0,10 Q18,-8 22,-25 Q18,-10 0,10" fill="#88b8d0" opacity=".42"/>
+  <path d="M0,10 Q0,-14 0,-28" fill="none" stroke="#7ab0c8" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>
+  <!-- Splashing -->
+  ${Array.from({length:6},(_,i)=>{const a=i*60*Math.PI/180;return`<circle cx="${Math.cos(a)*22}" cy="${42+Math.sin(a)*6}" r="2" fill="#9ac8e0" opacity=".4"/>`;}).join('')}
+  <!-- Autumn leaves floating in basin -->
+  ${[[-18,42],[8,46],[20,40]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="5" ry="2.5" fill="#d84010" opacity=".55" transform="rotate(${Math.random()*40-20},${x},${y})"/>`).join('')}
+</g>
+<!-- CHILDREN playing far away -->
+<g transform="translate(730,430)" opacity=".45">
+  <!-- Child 1 running -->
+  <ellipse cx="0" cy="20" rx="8" ry="12" fill="#4878d0"/>
+  <circle cx="0" cy="8" r="7" fill="#e8b888"/>
+  <!-- Scarf -->
+  <path d="M-6,14 Q0,18 6,14" fill="none" stroke="#e03030" stroke-width="3" stroke-linecap="round"/>
+  <!-- Arms -->
+  <line x1="-8" y1="18" x2="-18" y2="10" stroke="#4878d0" stroke-width="5" stroke-linecap="round"/>
+  <line x1="8" y1="18" x2="16" y2="24" stroke="#4878d0" stroke-width="5" stroke-linecap="round"/>
+  <!-- Legs running -->
+  <line x1="-4" y1="30" x2="-10" y2="44" stroke="#3a3028" stroke-width="5" stroke-linecap="round"/>
+  <line x1="4" y1="30" x2="12" y2="38" stroke="#3a3028" stroke-width="5" stroke-linecap="round"/>
+</g>
+<g transform="translate(780,428)" opacity=".42">
+  <!-- Child 2 - different color -->
+  <ellipse cx="0" cy="20" rx="8" ry="12" fill="#d04890"/>
+  <circle cx="0" cy="8" r="7" fill="#e8b888"/>
+  <line x1="-8" y1="18" x2="-14" y2="26" stroke="#d04890" stroke-width="5" stroke-linecap="round"/>
+  <line x1="8" y1="18" x2="18" y2="14" stroke="#d04890" stroke-width="5" stroke-linecap="round"/>
+  <line x1="-4" y1="30" x2="-8" y2="44" stroke="#3a3028" stroke-width="5" stroke-linecap="round"/>
+  <line x1="4" y1="30" x2="10" y2="42" stroke="#3a3028" stroke-width="5" stroke-linecap="round"/>
+</g>
+<!-- Dog chasing leaves -->
+<g transform="translate(618,440)" opacity=".55">
+  <ellipse cx="0" cy="12" rx="22" ry="12" fill="#c09058"/>
+  <ellipse cx="20" cy="6" rx="12" ry="10" fill="#d0a068"/>
+  <circle cx="30" cy="2" r="9" fill="#c09058"/>
+  <!-- Ears -->
+  <ellipse cx="26" cy="-6" rx="5" ry="9" fill="#b08040" transform="rotate(-20,26,-6)"/>
+  <ellipse cx="36" cy="-4" rx="5" ry="9" fill="#b08040" transform="rotate(20,36,-4)"/>
+  <!-- Eye -->
+  <circle cx="35" cy="1" r="2.5" fill="#1a1010"/>
+  <circle cx="36" cy="0" r="1" fill="#fff" opacity=".7"/>
+  <!-- Nose -->
+  <ellipse cx="39" cy="3" rx="3" ry="2.5" fill="#2a1818"/>
+  <!-- Legs -->
+  ${[[-10,8],[-2,8],[8,10],[16,8]].map(([lx,ly],i)=>`<line x1="${lx}" y1="${ly+14}" x2="${lx+(i<2?-4:4)}" y2="${ly+30}" stroke="#b08040" stroke-width="5" stroke-linecap="round"/>`).join('')}
+  <!-- Tail up -->
+  <path d="M-22,8 Q-34,0 -30,-12" fill="none" stroke="#c09058" stroke-width="5" stroke-linecap="round"/>
+  <path d="M-30,-12 Q-28,-20 -22,-18" fill="none" stroke="#c09058" stroke-width="4" stroke-linecap="round"/>
+</g>
+<!-- Park lamppost (second one right side) -->
+<line x1="1068" y1="248" x2="1068" y2="468" stroke="#2a2818" stroke-width="7" opacity=".65"/>
+<rect x="1062" y="458" width="12" height="16" fill="#38362a" rx="2" opacity=".65"/>
+<rect x="1058" y="472" width="20" height="8" fill="#45422e" rx="2" opacity=".6"/>
+<path d="M1068,255 Q1098,240 1114,258" fill="none" stroke="#2a2818" stroke-width="5" opacity=".65"/>
+<circle cx="1114" cy="262" r="12" fill="#fff8c0" opacity=".82"/>
+<circle cx="1114" cy="262" r="8" fill="#ffee80"/>
+<!-- FALLEN ACORNS near bench -->
+${[[508,486],[518,490],[678,488]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="5" ry="7" fill="#c08830"/><rect x="${x-2}" y="${y-8}" width="4" height="6" fill="#7a5020" rx="1"/>`).join('')}
+`,egg:{x:533,y:452,w:26,h:34,color:'#c06020',stroke:'#a04810',opacity:.33,pattern:'none'}},
+
+// ══ 10 · VESNICKÁ FARMA ════════════════════════════════════════
+{name:"Vesnická farma",svg:`
+<defs>
+  <linearGradient id="gA sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff0b8"/><stop offset="50%" stop-color="#ffe888"/><stop offset="100%" stop-color="#ffd058"/></linearGradient>
+  <linearGradient id="gAfield" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c8a028"/><stop offset="100%" stop-color="#a07818"/></linearGradient>
+  <linearGradient id="gAbarn" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#aa1e1e"/><stop offset="100%" stop-color="#cc2e2e"/></linearGradient>
+</defs>
+<rect width="1200" height="700" fill="url(#gA sky)"/>
+<!-- Hot sun -->
+<circle cx="880" cy="92"  r="95"  fill="#fff0a0" opacity=".5"/>
+<circle cx="880" cy="92"  r="60"  fill="#ffdd00" opacity=".97"/>
+<circle cx="880" cy="92"  r="48"  fill="#fff8c0" opacity=".45"/>
+<g stroke="#ffe060" stroke-width="2.5" opacity=".38">${Array.from({length:14},(_,i)=>{const a=i*25.7*Math.PI/180;return`<line x1="${880+68*Math.cos(a)}" y1="${92+68*Math.sin(a)}" x2="${880+98*Math.cos(a)}" y2="${92+98*Math.sin(a)}"/>`;}).join('')}</g>
+<!-- Clouds — summer cumulus -->
+<g>
+  <ellipse cx="248" cy="115" rx="132" ry="46" fill="#fff" opacity=".9"/>
+  <ellipse cx="345" cy="97"  rx="106" ry="40" fill="#fff" opacity=".88"/>
+  <ellipse cx="192" cy="135" rx="92"  ry="36" fill="#fffcf0" opacity=".85"/>
+  <ellipse cx="395" cy="118" rx="82"  ry="32" fill="#fff" opacity=".84"/>
+  <ellipse cx="560" cy="102" rx="112" ry="40" fill="#fff" opacity=".85"/>
+  <ellipse cx="1092" cy="128" rx="98" ry="36" fill="#fff" opacity=".82"/>
+</g>
+<!-- WHEAT FIELD -->
+<rect y="415" width="1200" height="285" fill="url(#gAfield)"/>
+<!-- Field furrows perspective -->
+${Array.from({length:14},(_,i)=>`<line x1="0" y1="${435+i*14}" x2="1200" y2="${437+i*14}" stroke="#a07818" stroke-width="1.2" opacity=".32"/>`).join('')}
+<!-- WHEAT STALKS LEFT — 72 stalks -->
+${Array.from({length:72},(_,i)=>{const x=i*12+3;const lean=Math.sin(i*.72)*9;const h=42+Math.sin(i*.5)*12;return`<line x1="${x}" y1="510" x2="${x+lean}" y2="${510-h}" stroke="#c09518" stroke-width="2" opacity=".78"/>
+<ellipse cx="${x+lean}" cy="${510-h}" rx="5.5" ry="13" fill="#c8a010" opacity=".82"/>
+<line x1="${x+lean}" y1="${510-h+8}" x2="${x+lean-10}" y2="${510-h+2}" stroke="#b09010" stroke-width="1.2" opacity=".5"/>`;}).join('')}
+<!-- WHEAT STALKS RIGHT -->
+${Array.from({length:68},(_,i)=>{const x=890+i*12;const lean=Math.sin(i*.8)*8;const h=40+Math.sin(i*.55)*13;return`<line x1="${x}" y1="512" x2="${x+lean}" y2="${512-h}" stroke="#c09518" stroke-width="2" opacity=".75"/>
+<ellipse cx="${x+lean}" cy="${512-h}" rx="5" ry="12" fill="#c8a010" opacity=".8"/>`;}).join('')}
+<!-- RED BARN — exhaustive detail -->
+<rect x="346" y="212" width="326" height="236" fill="url(#gAbarn)"/>
+<!-- Board siding -->
+${Array.from({length:20},(_,i)=>`<line x1="346" y1="${222+i*11}" x2="672" y2="${222+i*11}" stroke="#901818" stroke-width="1" opacity=".35"/>`).join('')}
+<!-- Vertical board lines -->
+${Array.from({length:18},(_,i)=>`<line x1="${360+i*18}" y1="212" x2="${360+i*18}" y2="448" stroke="#801010" stroke-width=".7" opacity=".28"/>`).join('')}
+<!-- Barn side shadow -->
+<rect x="672" y="212" width="40" height="236" fill="#881010" opacity=".4"/>
+<!-- STEEP GABLE ROOF -->
+<polygon points="320,212 509,82 698,212" fill="#6a2e18"/>
+<!-- Roof shingles — 10 rows -->
+${Array.from({length:10},(_,row)=>{const rw=row*28+12;const nT=Math.max(1,Math.floor(rw*1.8/22));const sX=509-rw;const y=94+row*12;return Array.from({length:nT},(_,col)=>`<path d="M${sX+col*22},${y} Q${sX+col*22+11},${y-7} ${sX+col*22+22},${y} L${sX+col*22+22},${y+11} L${sX+col*22},${y+11} Z" fill="#5a2410" opacity=".7"/>`).join('');}).join('')}
+<!-- Ridge cap -->
+<rect x="504" y="82" width="10" height="52" fill="#4a1c08"/>
+<!-- Weathervane -->
+<line x1="509" y1="82"  x2="509" y2="55"  stroke="#7a6040" stroke-width="3"/>
+<polygon points="509,49 492,62 509,58 526,62" fill="#c0a020"/>
+<g stroke="#9a8030" stroke-width="2" opacity=".7">
+  <line x1="490" y1="62" x2="528" y2="62"/>
+  <line x1="509" y1="46" x2="509" y2="78"/>
+</g>
+<!-- BARN WINDOWS with owl -->
+<rect x="366" y="242" width="58" height="70" fill="#5878a0" rx="5" opacity=".82"/>
+<rect x="594" y="242" width="58" height="70" fill="#5878a0" rx="5" opacity=".82"/>
+<!-- Mullions -->
+<line x1="395" y1="242" x2="395" y2="312" stroke="#7888a0" stroke-width="2" opacity=".5"/>
+<line x1="366" y1="278" x2="424" y2="278" stroke="#7888a0" stroke-width="2" opacity=".5"/>
+<line x1="623" y1="242" x2="623" y2="312" stroke="#7888a0" stroke-width="2" opacity=".5"/>
+<line x1="594" y1="278" x2="652" y2="278" stroke="#7888a0" stroke-width="2" opacity=".5"/>
+<!-- Owl in left window -->
+<g transform="translate(387,268)">
+  <ellipse cx="0" cy="10" rx="11" ry="14" fill="#c09858"/>
+  <circle cx="0"  cy="2"  r="11"  fill="#d0a868"/>
+  <ellipse cx="0" cy="3"  rx="9"  ry="8"  fill="#e8d8a0" opacity=".8"/>
+  <circle cx="-5" cy="1"  r="4.5" fill="#1a1a0a"/>
+  <circle cx="5"  cy="1"  r="4.5" fill="#1a1a0a"/>
+  <circle cx="-4" cy="0"  r="1.5" fill="#fff" opacity=".7"/>
+  <circle cx="6"  cy="0"  r="1.5" fill="#fff" opacity=".7"/>
+  <polygon points="0,5 -2,9 2,9" fill="#d0a030"/>
+  <polygon points="-8,-8 -12,-18 -3,-12" fill="#b89050"/>
+  <polygon points="8,-8 12,-18 3,-12"  fill="#b89050"/>
+</g>
+<!-- LARGE BARN DOORS — X-brace -->
+<rect x="418" y="342" width="80" height="106" fill="#7a3e18" rx="4"/>
+<rect x="502" y="342" width="80" height="106" fill="#7a3e18" rx="4"/>
+<g stroke="#5a2c08" stroke-width="3" opacity=".62">
+  <line x1="418" y1="342" x2="498" y2="448"/><line x1="498" y1="342" x2="418" y2="448"/>
+  <line x1="502" y1="342" x2="582" y2="448"/><line x1="582" y1="342" x2="502" y2="448"/>
+  <line x1="418" y1="395" x2="498" y2="395"/><line x1="502" y1="395" x2="582" y2="395"/>
+</g>
+<!-- Iron strap hinges -->
+${[[418,352],[418,428],[580,352],[580,428]].map(([x,y])=>`<rect x="${x}" y="${y}" width="18" height="10" fill="#3a2008" rx="2"/>`).join('')}
+<!-- Door handles -->
+<circle cx="492" cy="398" r="6" fill="#c89028" stroke="#9a7018" stroke-width="1.5"/>
+<circle cx="508" cy="398" r="6" fill="#c89028" stroke="#9a7018" stroke-width="1.5"/>
+<!-- HAY BALES — 3 round bales -->
+<ellipse cx="762" cy="460" rx="65" ry="46" fill="#c09820"/>
+${Array.from({length:8},(_,i)=>`<line x1="${700+i*9}" y1="${448}" x2="${698+i*9}" y2="${474}" stroke="#a07810" stroke-width="1.2" opacity=".4"/>`).join('')}
+<ellipse cx="762" cy="460" rx="52" ry="37" fill="none" stroke="#a07810" stroke-width="1.8" opacity=".55"/>
+<ellipse cx="762" cy="460" rx="36" ry="26" fill="none" stroke="#a07810" stroke-width="1.2" opacity=".42"/>
+<ellipse cx="878" cy="468" rx="60" ry="43" fill="#c09820"/>
+<ellipse cx="878" cy="468" rx="47" ry="34" fill="none" stroke="#a07810" stroke-width="1.8" opacity=".5"/>
+<!-- Square bale on top -->
+<rect x="828" y="418" width="68" height="48" fill="#b88e18" rx="5"/>
+<g stroke="#a07e10" stroke-width="1.2" opacity=".5">
+  <line x1="828" y1="432" x2="896" y2="432"/><line x1="828" y1="448" x2="896" y2="448"/>
+  <line x1="856" y1="418" x2="856" y2="466"/>
+</g>
+<!-- HAY STRANDS on bales -->
+${Array.from({length:12},(_,i)=>`<line x1="${718+i*5}" y1="${445}" x2="${716+i*5}" y2="${476}" stroke="#e8c030" stroke-width=".8" opacity=".38"/>`).join('')}
+<!-- FENCE — detailed with rails -->
+${Array.from({length:9},(_,i)=>`<rect x="${265+i*29}" y="425" width="15" height="72" fill="#b09060" rx="7 7 0 0"/><rect x="${265+i*29}" y="423" width="15" height="8" fill="#c0a070" rx="3" opacity=".7"/>`).join('')}
+<rect x="260" y="447" width="252" height="10" fill="#c8a068" rx="4"/>
+<rect x="260" y="467" width="252" height="10" fill="#c8a068" rx="4"/>
+${Array.from({length:9},(_,i)=>`<circle cx="${272+i*29}" cy="${451}" r="2.2" fill="#906840"/><circle cx="${272+i*29}" cy="${471}" r="2.2" fill="#906840"/>`).join('')}
+<!-- TRACTOR — detailed -->
+<g transform="translate(145,382)">
+  <rect x="-52" y="0" width="104" height="58" fill="#267022" rx="6"/>
+  <rect x="18"  y="-30" width="50"  height="34" fill="#1e6018" rx="5"/>
+  <rect x="22"  y="-26" width="22"  height="20" fill="#4888d8" opacity=".85" rx="2"/>
+  <rect x="46"  y="-26" width="20"  height="20" fill="#3878c8" opacity=".85" rx="2"/>
+  <rect x="8"   y="-50" width="9"   height="24" fill="#1a1a28" rx="3"/>
+  <!-- Exhaust puffs -->
+  <ellipse cx="12" cy="-55" rx="7" ry="6"  fill="#888" opacity=".3"/>
+  <ellipse cx="14" cy="-63" rx="6" ry="5"  fill="#888" opacity=".2"/>
+  <ellipse cx="11" cy="-70" rx="5" ry="4"  fill="#888" opacity=".14"/>
+  <!-- Big rear wheels with full tread -->
+  <circle cx="-30" cy="60" r="36" fill="#181818"/>
+  <circle cx="-30" cy="60" r="28" fill="#252525"/>
+  ${Array.from({length:12},(_,i)=>{const a=i*30*Math.PI/180;return`<line x1="${-30+28*Math.cos(a)}" y1="${60+28*Math.sin(a)}" x2="${-30+36*Math.cos(a)}" y2="${60+36*Math.sin(a)}" stroke="#333" stroke-width="5"/>`;}).join('')}
+  <circle cx="-30" cy="60" r="9" fill="#383838"/>
+  <!-- Front wheels -->
+  <circle cx="52" cy="62" r="24" fill="#181818"/>
+  <circle cx="52" cy="62" r="18" fill="#252525"/>
+  ${Array.from({length:10},(_,i)=>{const a=i*36*Math.PI/180;return`<line x1="${52+18*Math.cos(a)}" y1="${62+18*Math.sin(a)}" x2="${52+24*Math.cos(a)}" y2="${62+24*Math.sin(a)}" stroke="#333" stroke-width="3.5"/>`;}).join('')}
+  <circle cx="52" cy="62" r="6" fill="#383838"/>
+  <!-- Step -->
+  <rect x="-52" y="38" width="16" height="8" fill="#1c5c1a" rx="2"/>
+</g>
+<!-- CHICKENS — 5 detailed -->
+${Array.from({length:5},(_,i)=>`
+<g transform="translate(${288+i*38},${455+Math.sin(i)*6})">
+  <ellipse cx="0" cy="5" rx="13" ry="9" fill="${i%2===0?'#f0f0e0':'#f8d080'}"/>
+  <circle cx="10" cy="-1" r="7.5" fill="${i%2===0?'#f0f0e0':'#f8d080'}"/>
+  <polygon points="15,0 22,2 15,4" fill="#f08018"/>
+  <polygon points="10,-9 7,-15 13,-14" fill="#e03030" opacity=".88"/>
+  <ellipse cx="13" cy="-2" rx="4" ry="3" fill="#f8e890" opacity=".45"/>
+  <circle cx="16" cy="-1" r="1.8" fill="#1a1a1a"/>
+  <line x1="-6" y1="13" x2="-8"  y2="24" stroke="#f08018" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="2"  y1="14" x2="0"   y2="25" stroke="#f08018" stroke-width="2.5" stroke-linecap="round"/>
+  ${i%3===0?`<ellipse cx="0" cy="7" rx="9" ry="5" fill="none" stroke="#e0d898" stroke-width=".8" opacity=".4"/>`:''}
+</g>`).join('')}
+
+<!-- DUCK POND near barn -->
+<ellipse cx="220" cy="468" rx="82" ry="38" fill="#4888b0" opacity=".65"/>
+<ellipse cx="220" cy="465" rx="78" ry="34" fill="#5898c0" opacity=".38"/>
+<!-- Pond ripples -->
+${Array.from({length:3},(_,i)=>`<ellipse cx="220" cy="468" rx="${28+i*18}" ry="${12+i*8}" fill="none" stroke="#6aa8c8" stroke-width=".8" opacity="${.3-i*.08}"/>`).join('')}
+<!-- Ducks on pond -->
+${[[200,462],[232,456],[218,472]].map(([x,y],i)=>`
+<g transform="translate(${x},${y})">
+  <ellipse cx="0" cy="4" rx="${10+i}$" ry="${7+i*.5}" fill="#f0f0e0"/>
+  <ellipse cx="${8+i}" cy="0" rx="${8+i*.5}" ry="${6+i*.5}" fill="${i===0?'#388838':'#f0f0e0'}"/>
+  <ellipse cx="${14+i*1.5}" cy="${-2+i}" rx="${5+i*.5}" ry="${4+i*.5}" fill="${i===0?'#388838':'#f0f0e0'}"/>
+  <ellipse cx="${17+i*2}" cy="${-1+i}" rx="${5+i*.5}" ry="${3+i*.5}" fill="${i===0?'#e07818':'#e08820'}"/>
+</g>`).join('')}
+<!-- Cat watching ducks from fence -->
+<g transform="translate(270,438)" opacity=".72">
+  <ellipse cx="0" cy="8" rx="10" ry="8" fill="#808060"/>
+  <circle cx="0" cy="0" r="8" fill="#909070"/>
+  <polygon points="-7,-6 -11,-16 -3,-10" fill="#808060"/>
+  <polygon points="7,-6 11,-16 3,-10" fill="#808060"/>
+  <ellipse cx="-3" cy="0" rx="2.5" ry="3" fill="#d4c808" opacity=".88"/>
+  <ellipse cx="3" cy="0" rx="2.5" ry="3" fill="#d4c808" opacity=".88"/>
+  <ellipse cx="-3" cy="0" rx="1" ry="2.5" fill="#181808"/>
+  <ellipse cx="3" cy="0" rx="1" ry="2.5" fill="#181808"/>
+</g>
+<!-- PIG behind fence -->
+<g transform="translate(250,468)" opacity=".68">
+  <ellipse cx="0" cy="8" rx="22" ry="16" fill="#e8a8a0"/>
+  <circle cx="16" cy="0" r="13" fill="#f0b8b0"/>
+  <ellipse cx="25" cy="2" rx="9" ry="7" fill="#e8a8a0"/>
+  <!-- Snout -->
+  <ellipse cx="29" cy="4" rx="6" ry="5" fill="#d89898"/>
+  <circle cx="27" cy="4" r="1.5" fill="#c08080"/>
+  <circle cx="31" cy="4" r="1.5" fill="#c08080"/>
+  <!-- Eye -->
+  <circle cx="24" cy="-2" r="3" fill="#1a1010"/>
+  <circle cx="25" cy="-3" r="1.2" fill="#fff" opacity=".6"/>
+  <!-- Ear -->
+  <ellipse cx="10" cy="-10" rx="7" ry="9" fill="#e8a8a0" transform="rotate(-20,10,-10)"/>
+  <!-- Curly tail -->
+  <path d="M-22,8 Q-32,2 -30,-6 Q-28,-12 -22,-10" fill="none" stroke="#e8a8a0" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Mud spots -->
+  ${Array.from({length:4},(_,i)=>`<ellipse cx="${-5+i*7}" cy="${8+Math.sin(i)*4}" rx="${4+Math.sin(i)*2}" ry="${2.5+Math.sin(i)*1.5}" fill="#8a6048" opacity=".35"/>`).join('')}
+</g>
+<!-- FIELD MOUSE peeking from wheat -->
+<g transform="translate(488,460)" opacity=".72">
+  <ellipse cx="0" cy="4" rx="9" ry="7" fill="#9a7848"/>
+  <ellipse cx="8" cy="0" rx="7" ry="6" fill="#a88858"/>
+  <circle cx="14" cy="-2" r="5" fill="#9a7848"/>
+  <!-- Ears -->
+  <circle cx="10" cy="-8" r="5" fill="#c09878"/>
+  <circle cx="10" cy="-8" r="3" fill="#e8b8a0" opacity=".6"/>
+  <!-- Eye -->
+  <circle cx="17" cy="-3" r="2.5" fill="#1a1010"/>
+  <circle cx="18" cy="-4" r="1" fill="#fff" opacity=".7"/>
+  <!-- Nose -->
+  <circle cx="19" cy="-1" r="1.5" fill="#e08080"/>
+  <!-- Whiskers -->
+  <g stroke="#d0c0a0" stroke-width=".7" opacity=".65">
+    <line x1="19" y1="-1" x2="28" y2="-4"/>
+    <line x1="19" y1="-1" x2="28" y2="0"/>
+    <line x1="19" y1="-1" x2="26" y2="3"/>
+  </g>
+  <!-- Tail -->
+  <path d="M-9,6 Q-20,10 -22,4 Q-24,-2 -18,-4" fill="none" stroke="#9a7848" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+<!-- Crow on barn roof -->
+<g transform="translate(509,212)" fill="#1a1a22" opacity=".72">
+  <ellipse cx="0" cy="6" rx="15" ry="9"/>
+  <ellipse cx="13" cy="1" rx="10" ry="7"/>
+  <circle cx="22" cy="-2" r="6"/>
+  <polygon points="27,0 36,2 27,4" fill="#252530"/>
+  <circle cx="25" cy="-1" r="1.5" fill="#fff" opacity=".55"/>
+  <line x1="-12" y1="14" x2="-10" y2="24" stroke="#1a1a22" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="-4" y1="14" x2="-2" y2="24" stroke="#1a1a22" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+<!-- Vegetable garden patch -->
+<rect x="100" y="418" width="145" height="55" fill="#7a5828" rx="4" opacity=".55"/>
+${Array.from({length:5},(_,i)=>`<line x1="100" y1="${428+i*10}" x2="245" y2="${428+i*10}" stroke="#5a3818" stroke-width=".8" opacity=".3"/>`).join('')}
+<!-- Tomato plants -->
+${Array.from({length:4},(_,i)=>`
+<line x1="${118+i*30}" y1="${418}" x2="${118+i*30}" y2="${388+Math.sin(i)*8}" stroke="#3a6818" stroke-width="2.5"/>
+<circle cx="${118+i*30}" cy="${385+Math.sin(i)*8}" r="${8+Math.sin(i+1)*2}" fill="#d82020" opacity=".88"/>
+<circle cx="${118+i*30}" cy="${382+Math.sin(i)*8}" r="${4+Math.sin(i+1)}" fill="#e03030" opacity=".45"/>
+<polygon points="${118+i*30},${378+Math.sin(i)*8} ${108+i*30},${386+Math.sin(i)*8} ${128+i*30},${386+Math.sin(i)*8}" fill="#3a7820" opacity=".72"/>
+`).join('')}
+<!-- SUNFLOWERS -->
+${Array.from({length:4},(_,i)=>`
+<line x1="${340+i*22}" y1="418" x2="${340+i*22}" y2="${298+Math.sin(i)*.5*22}" stroke="#5a8a28" stroke-width="5"/>
+<circle cx="${340+i*22}" cy="${295+Math.sin(i)*.5*22}" r="22" fill="#f8a010" opacity=".94"/>
+<circle cx="${340+i*22}" cy="${295+Math.sin(i)*.5*22}" r="14" fill="#4a2808"/>
+${Array.from({length:14},(_,j)=>{const a=j*25.7*Math.PI/180;return`<ellipse cx="${340+i*22+Math.cos(a)*24}" cy="${295+Math.sin(i)*.5*22+Math.sin(a)*24}" rx="7.5" ry="4" fill="#f8a010" opacity=".88" transform="rotate(${j*25.7},${340+i*22+Math.cos(a)*24},${295+Math.sin(i)*.5*22+Math.sin(a)*24})"/>`;}).join('')}
+<path d="M${340+i*22},${368+Math.sin(i)*12} Q${340+i*22-28},${358+Math.sin(i)*12} ${340+i*22-24},${348+Math.sin(i)*12}" fill="#3a7820" opacity=".82"/>
+`).join('')}
+`,egg:{x:738,y:442,w:28,h:36,color:'#b08808',stroke:'#906808',opacity:.36,pattern:'stripes-light'}},
+
+// ══ 11 · KOUZELNÝ LES V NOCI ══════════════════════════════════
+{name:"Kouzelný les v noci",svg:`
+<defs>
+  <radialGradient id="gBmoon" cx="50%" cy="50%"><stop offset="0%" stop-color="#fffde0"/><stop offset="60%" stop-color="#fff9b0" stop-opacity=".72"/><stop offset="100%" stop-color="#fff9b0" stop-opacity="0"/></radialGradient>
+  <radialGradient id="gBmush1" cx="50%" cy="28%"><stop offset="0%" stop-color="#ffe060"/><stop offset="100%" stop-color="#f09010" stop-opacity="0"/></radialGradient>
+  <radialGradient id="gBmush2" cx="50%" cy="28%"><stop offset="0%" stop-color="#40ffe0"/><stop offset="100%" stop-color="#00b890" stop-opacity="0"/></radialGradient>
+  <radialGradient id="gBmush3" cx="50%" cy="28%"><stop offset="0%" stop-color="#d060ff"/><stop offset="100%" stop-color="#8000c0" stop-opacity="0"/></radialGradient>
+  <linearGradient id="gBground" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#071c0e"/><stop offset="100%" stop-color="#030c06"/></linearGradient>
+</defs>
+<!-- Night sky — layered -->
+<rect width="1200" height="700" fill="#030612"/>
+<!-- Milky way -->
+<ellipse cx="600" cy="185" rx="540" ry="125" fill="#141a38" opacity=".58" transform="rotate(-23,600,185)"/>
+<ellipse cx="600" cy="185" rx="380" ry="72"  fill="#1c2448" opacity=".45" transform="rotate(-23,600,185)"/>
+<!-- Nebula colors -->
+<ellipse cx="350" cy="120" rx="180" ry="60" fill="#1a1238" opacity=".3" transform="rotate(-15,350,120)"/>
+<ellipse cx="850" cy="150" rx="160" ry="50" fill="#182438" opacity=".28" transform="rotate(10,850,150)"/>
+<!-- STARS — 140 -->
+<g fill="#fff">${stars(140)}</g>
+<!-- Bright star sparkles -->
+${[[78,52],[325,40],[548,65],[765,32],[985,55],[1152,42],[178,128],[442,143],[682,118],[900,138]].map(([x,y],i)=>`
+<circle cx="${x}" cy="${y}" r="${1.8+Math.sin(i)*.4}" opacity=".92"/>
+<line x1="${x-5}" y1="${y}" x2="${x+5}" y2="${y}" stroke="#fff" stroke-width=".7" opacity=".5"/>
+<line x1="${x}" y1="${y-5}" x2="${x}" y2="${y+5}" stroke="#fff" stroke-width=".7" opacity=".5"/>
+`).join('')}
+<!-- FULL MOON -->
+<circle cx="885" cy="120" r="105" fill="url(#gBmoon)"/>
+<circle cx="885" cy="120" r="65"  fill="#fffde6" opacity=".96"/>
+<circle cx="885" cy="120" r="52"  fill="#fff9c8" opacity=".6"/>
+<!-- Moon craters -->
+<circle cx="862"  cy="102" r="13" fill="#f0e8b0" opacity=".32"/>
+<circle cx="898"  cy="132" r="9"  fill="#f0e8b0" opacity=".28"/>
+<circle cx="872"  cy="140" r="7"  fill="#f0e8b0" opacity=".25"/>
+<circle cx="906"  cy="108" r="11" fill="#f0e8b0" opacity=".3"/>
+<circle cx="878"  cy="88"  r="5"  fill="#f0e8b0" opacity=".22"/>
+<!-- Moon glow halo -->
+<circle cx="885" cy="120" r="92" fill="#fffde6" opacity=".06"/>
+<circle cx="885" cy="120" r="120" fill="#fffde6" opacity=".03"/>
+<!-- GROUND -->
+<rect y="518" width="1200" height="182" fill="url(#gBground)"/>
+<ellipse cx="600" cy="518" rx="665" ry="38" fill="#0e2c18" opacity=".8"/>
+<!-- Bioluminescent floor glow patches -->
+<ellipse cx="295"  cy="528" rx="290" ry="58" fill="#103820" opacity=".38"/>
+<ellipse cx="905"  cy="524" rx="285" ry="62" fill="#103820" opacity=".35"/>
+<ellipse cx="600"  cy="540" rx="200" ry="42" fill="#122a18" opacity=".3"/>
+<!-- GLOWING MUSHROOM CLUSTERS — 3 sets with halos -->
+${[
+  [{x:128,y:526,r:30,stem:20,c:'#ff7010',hc:'#ffe040',gc:'gBmush1'},{x:162,y:532,r:22,stem:15,c:'#ff5010',gc:'gBmush1'},{x:148,y:534,r:17,stem:12,c:'#ff8820',gc:'gBmush1'}],
+  [{x:1005,y:522,r:28,stem:18,c:'#10c0a0',hc:'#40ffe0',gc:'gBmush2'},{x:1038,y:529,r:20,stem:14,c:'#10e0c0',gc:'gBmush2'},{x:1022,y:532,r:15,stem:11,c:'#08a890',gc:'gBmush2'}],
+  [{x:820,y:528,r:24,stem:16,c:'#c050ff',hc:'#e080ff',gc:'gBmush3'},{x:848,y:534,r:16,stem:11,c:'#a030e0',gc:'gBmush3'}]
+].map(cluster=>cluster.map(({x,y,r,stem,c,gc})=>`
+<ellipse cx="${x}" cy="${y}" rx="${r}"    ry="${r*.37}" fill="${c}" opacity=".88"/>
+<ellipse cx="${x}" cy="${y}" rx="${r-4}"  ry="${(r-4)*.37}" fill="url(#${gc})"/>
+<rect x="${x-4}" y="${y}" width="8" height="${stem}" fill="#e0d8c8" rx="2"/>
+<!-- Halo glow -->
+<ellipse cx="${x}" cy="${y}" rx="${r*1.5}" ry="${r*.3}" fill="${c}" opacity=".14"/>
+<!-- Spots -->
+${Array.from({length:5},(_,j)=>`<circle cx="${x-r*.5+j*r*.24}" cy="${y-r*.08}" r="2" fill="#fff" opacity=".55"/>`).join('')}
+`).join('')).join('')}
+<!-- GLOWING FLOOR FLOWERS — 20 -->
+${Array.from({length:20},(_,i)=>{const x=38+i*58;const colors=['#40ff60','#a040ff','#40b0ff','#ff40a0','#ffd040'];const c=colors[i%5];const r=5+Math.sin(i*2)*2;return`
+<circle cx="${x}" cy="${522+Math.sin(i*.9)*8}" r="${r}" fill="${c}" opacity=".62"/>
+<circle cx="${x}" cy="${522+Math.sin(i*.9)*8}" r="${r*2.2}" fill="${c}" opacity=".1"/>
+<line x1="${x}" y1="${522+Math.sin(i*.9)*8}" x2="${x}" y2="${536+Math.sin(i*.9)*8}" stroke="${c}" stroke-width="1.6" opacity=".38"/>
+`;}).join('')}
+<!-- FIREFLIES — 36 with trails -->
+${Array.from({length:36},(_,i)=>{const x=28+i*32+Math.sin(i*1.7)*18;const y=195+Math.sin(i*.82)*210;const r=1.2+Math.sin(i)*.8;return`
+<circle cx="${x}" cy="${y}" r="${r}" fill="#f8f060" opacity="${(.58+Math.sin(i)*.32).toFixed(2)}"/>
+<circle cx="${x}" cy="${y}" r="${r*6}" fill="#f8f060" opacity=".07"/>
+`;}).join('')}
+<!-- MASSIVE DARK TREES — left pair -->
+<rect x="244" y="118" width="40" height="420" fill="#02080404"/>
+<rect x="244" y="118" width="40" height="420" fill="#020a04"/>
+${Array.from({length:6},(_,t)=>{const w=28+t*22;const ty=116-t*2+t*26;const cols=['#050d06','#060f07','#071108','#081208','#09130a','#0a150b'];return`<polygon points="264,${ty-26} ${264-w},${ty} ${264+w},${ty}" fill="${cols[t]}"/>`;}).join('')}
+<!-- Bark -->
+<g stroke="#030804" stroke-width="1.2" opacity=".5">${Array.from({length:5},(_,i)=>`<path d="M244,${155+i*50} Q264,${152+i*50} 284,${157+i*50}"/>`).join('')}</g>
+<!-- Roots left -->
+<path d="M244,535 Q216,548 196,562" fill="none" stroke="#020a04" stroke-width="10" stroke-linecap="round"/>
+<path d="M284,537 Q308,550 328,565" fill="none" stroke="#020a04" stroke-width="9"  stroke-linecap="round"/>
+<!-- Right trees -->
+<rect x="920" y="106" width="40" height="432" fill="#020a04"/>
+${Array.from({length:6},(_,t)=>{const w=28+t*22;const ty=104-t*2+t*26;return`<polygon points="940,${ty-26} ${940-w},${ty} ${940+w},${ty}" fill="${['#050d06','#060f07','#071108','#081208','#09130a','#0a150b'][t]}"/>`;}).join('')}
+<path d="M920,535 Q892,549 870,565" fill="none" stroke="#020a04" stroke-width="10" stroke-linecap="round"/>
+<path d="M960,537 Q984,551 1006,568" fill="none" stroke="#020a04" stroke-width="9"  stroke-linecap="round"/>
+<!-- CENTER ATMOSPHERIC TREE -->
+<rect x="580" y="74" width="44" height="464" fill="#010604"/>
+${Array.from({length:7},(_,t)=>{const w=30+t*24;const ty=72-t*2+t*26;return`<polygon points="602,${ty-28} ${602-w},${ty} ${602+w},${ty}" fill="${['#040b05','#050d06','#060f07','#071108','#081208','#09130a','#0a140b'][t]}"/>`;}).join('')}
+<!-- Gnarled branches -->
+<path d="M602,195 Q556,174 532,148" fill="none" stroke="#010604" stroke-width="7" stroke-linecap="round"/>
+<path d="M602,240 Q650,215 672,190" fill="none" stroke="#010604" stroke-width="6" stroke-linecap="round"/>
+<path d="M602,288 Q560,272 542,255" fill="none" stroke="#010604" stroke-width="5" stroke-linecap="round"/>
+<path d="M602,195 Q548,178 538,165 Q528,152 535,140" fill="none" stroke="#010604" stroke-width="4" stroke-linecap="round"/>
+<!-- Root flare center -->
+<path d="M580,535 Q554,550 538,568" fill="none" stroke="#010604" stroke-width="11" stroke-linecap="round"/>
+<path d="M624,537 Q648,552 666,572" fill="none" stroke="#010604" stroke-width="10" stroke-linecap="round"/>
+<path d="M600,540 Q596,565 592,582" fill="none" stroke="#010604" stroke-width="8"  stroke-linecap="round"/>
+<!-- OWL — detailed -->
+<line x1="792" y1="332" x2="928" y2="345" stroke="#0a1a0c" stroke-width="11"/>
+<line x1="792" y1="326" x2="928" y2="338" stroke="#0d2010" stroke-width="5" opacity=".4"/>
+<g transform="translate(845,318)">
+  <ellipse cx="0" cy="15" rx="17" ry="22" fill="#6a4828"/>
+  <ellipse cx="0" cy="10" rx="15" ry="15" fill="#8a6040"/>
+  <ellipse cx="0" cy="9" rx="13" ry="11" fill="#d0c082" opacity=".8"/>
+  <circle cx="-6" cy="5"  r="6"   fill="#ffcc00" opacity=".92"/>
+  <circle cx="6"  cy="5"  r="6"   fill="#ffcc00" opacity=".92"/>
+  <circle cx="-6" cy="5"  r="3.8" fill="#0a0808"/>
+  <circle cx="6"  cy="5"  r="3.8" fill="#0a0808"/>
+  <circle cx="-5" cy="4"  r="1.4" fill="#fff" opacity=".7"/>
+  <circle cx="7"  cy="4"  r="1.4" fill="#fff" opacity=".7"/>
+  <polygon points="0,11 -3,16 3,16" fill="#c09820"/>
+  <polygon points="-9,-3 -14,-15 -3,-9" fill="#6a4828"/>
+  <polygon points="9,-3 14,-15 3,-9"   fill="#6a4828"/>
+  <path d="M-17,20 Q-8,30 0,26 Q8,30 17,20" fill="#5a3818" opacity=".72"/>
+  ${Array.from({length:4},(_,i)=>`<line x1="-14" y1="${22+i*3}" x2="14" y2="${22+i*3}" stroke="#7a5030" stroke-width="1" opacity=".45"/>`).join('')}
+</g>
+
+<!-- FOX with glowing eyes in undergrowth -->
+<g transform="translate(368,510)" opacity=".7">
+  <ellipse cx="0" cy="12" rx="20" ry="12" fill="#a84018"/>
+  <ellipse cx="18" cy="4" rx="14" ry="10" fill="#c04820"/>
+  <!-- Belly -->
+  <ellipse cx="8" cy="14" rx="10" ry="7" fill="#e8d0a0" opacity=".72"/>
+  <!-- Head -->
+  <ellipse cx="28" cy="0" rx="12" ry="10" fill="#b04020"/>
+  <!-- Muzzle/snout -->
+  <polygon points="38,-2 52,2 38,6" fill="#e8d0a0" opacity=".85"/>
+  <polygon points="48,-2 54,2 48,5" fill="#1a1010" opacity=".4"/>
+  <!-- Glowing eyes -->
+  <ellipse cx="26" cy="-4" rx="4" ry="4" fill="#f0d010" opacity=".9"/>
+  <ellipse cx="26" cy="-4" rx="1.5" ry="3.5" fill="#1a1010"/>
+  <ellipse cx="26" cy="-4" rx="4.5" ry="4.5" fill="#f0d010" opacity=".3" filter="url(#g3glow)"/>
+  <!-- Ears -->
+  <polygon points="20,-8 14,-26 28,-12" fill="#b04020"/>
+  <polygon points="20,-8 16,-22 26,-12" fill="#e8a0a0" opacity=".55"/>
+  <polygon points="32,-6 28,-20 38,-10" fill="#b04020"/>
+  <!-- Bushy tail -->
+  <path d="M-20,14 Q-42,8 -48,0 Q-44,-10 -34,-8 Q-22,-4 -20,14" fill="#c04820"/>
+  <path d="M-34,-8 Q-22,-6 -20,14" fill="none" stroke="#e0b090" stroke-width="1.5" opacity=".4"/>
+  <ellipse cx="-46" cy="-2" rx="8" ry="6" fill="#f0f0e8" opacity=".75"/>
+</g>
+<!-- Additional firefly glow patches (halos) -->
+${Array.from({length:12},(_,i)=>{const x=60+i*92;const y=250+Math.sin(i*1.3)*180;return`<circle cx="${x}" cy="${y}" r="${18+Math.sin(i)*8}" fill="#f8f060" opacity="${.04+Math.sin(i)*.02}"/>`;}).join('')}
+<!-- CONSTELLATION pattern in sky -->
+<g stroke="#fff" stroke-width="0.6" opacity=".18">
+  <line x1="120" y1="48" x2="165" y2="72"/>
+  <line x1="165" y1="72" x2="142" y2="108"/>
+  <line x1="142" y1="108" x2="188" y2="128"/>
+  <line x1="188" y1="128" x2="210" y2="95"/>
+  <line x1="210" y1="95" x2="165" y2="72"/>
+</g>
+<!-- Constellation dots -->
+${[[120,48],[165,72],[142,108],[188,128],[210,95]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.2" fill="#fff" opacity=".55"/>`).join('')}
+<!-- Second constellation -->
+<g stroke="#fff" stroke-width="0.5" opacity=".14">
+  <line x1="680" y1="55" x2="720" y2="38"/>
+  <line x1="720" y1="38" x2="748" y2="65"/>
+  <line x1="748" y1="65" x2="730" y2="92"/>
+  <line x1="730" y1="92" x2="695" y2="80"/>
+  <line x1="695" y1="80" x2="680" y2="55"/>
+</g>
+<!-- Meteor streak -->
+<line x1="340" y1="25" x2="415" y2="68" stroke="#fff" stroke-width="1.5" opacity=".38"/>
+<line x1="340" y1="25" x2="370" y2="42" stroke="#fff" stroke-width="3" opacity=".2"/>
+<!-- Ground mist tendrils (extra ethereal) -->
+<path d="M0,518 Q80,510 160,520 Q240,530 320,518" fill="none" stroke="#1e3c28" stroke-width="18" stroke-linecap="round" opacity=".35"/>
+<path d="M880,515 Q960,505 1040,518 Q1120,530 1200,515" fill="none" stroke="#1e3c28" stroke-width="16" stroke-linecap="round" opacity=".32"/>
+<!-- MUSHROOM RING on ground -->
+${Array.from({length:8},(_,i)=>{const a=i*45*Math.PI/180;const x=600+Math.cos(a)*88;const y=535+Math.sin(a)*28;return`<ellipse cx="${x}" cy="${y}" rx="7" ry="3.5" fill="#c060ff" opacity=".55"/>
+<rect x="${x-3}" y="${y}" width="6" height="10" fill="#e0d0c0" rx="1.5"/>
+<ellipse cx="${x}" cy="${y}" rx="12" ry="4" fill="#c060ff" opacity=".1"/>`;}).join('')}
+<!-- MOON-LIT PATH -->
+<path d="M522,700 Q542,635 511,570 Q480,505 518,472" fill="none" stroke="#162a1c" stroke-width="26" opacity=".68"/>
+<path d="M522,700 Q542,635 511,570 Q480,505 518,472" fill="none" stroke="#1e3c28" stroke-width="16" opacity=".52"/>
+<path d="M522,700 Q542,635 511,570 Q480,505 518,472" fill="none" stroke="#2c5438" stroke-width="5"  opacity=".22"/>
+`,egg:{x:505,y:466,w:24,h:32,color:'#102010',stroke:'#080e08',opacity:.42,pattern:'none'}},
+
+// ══ 12 · HORSKÁ CHALUPA (FINÁLE) ══════════════════════════════
+{name:"Horská chalupa",svg:`
+<defs>
+  <linearGradient id="gCsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9cd0ee"/><stop offset="55%" stop-color="#c2e8f6"/><stop offset="100%" stop-color="#e0f4fe"/></linearGradient>
+  <linearGradient id="gCsnow" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f2f8ff"/><stop offset="100%" stop-color="#d8ecff"/></linearGradient>
+  <linearGradient id="gCmtn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e6f2fc"/><stop offset="28%" stop-color="#8cb2ca"/><stop offset="100%" stop-color="#5c88a0"/></linearGradient>
+  <radialGradient id="gCwin"><stop offset="0%" stop-color="#ffe090" stop-opacity=".82"/><stop offset="100%" stop-color="#ff9a20" stop-opacity="0"/></radialGradient>
+  <linearGradient id="gCstone" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ccc0a8"/><stop offset="100%" stop-color="#b0a494"/></linearGradient>
+</defs>
+<rect width="1200" height="700" fill="url(#gCsky)"/>
+<!-- Mountain chain 5 ridges -->
+<polygon points="-22,462 305,86 632,462" fill="url(#gCmtn)"/>
+<polygon points="118,462 445,58 772,462"  fill="#90b4ca" opacity=".73"/>
+<polygon points="418,462 735,36 1052,462" fill="#a0c2d6" opacity=".67"/>
+<polygon points="678,462 996,72  1314,462" fill="#90b4ca" opacity=".72"/>
+<polygon points="870,462 1110,92  1350,462" fill="#a8c8da" opacity=".6"/>
+<!-- Snow caps — triple layer each -->
+${[[305,86,88],[445,58,92],[735,36,98],[996,72,88],[1110,92,74]].map(([cx,y,r])=>`
+<polygon points="${cx},${y} ${cx-r*.54},${y+r*.86} ${cx+r*.54},${y+r*.86}" fill="#f0f8ff" opacity=".97"/>
+<polygon points="${cx},${y} ${cx-r*.34},${y+r*.54} ${cx+r*.34},${y+r*.54}" fill="#fff" opacity=".84"/>
+<polygon points="${cx},${y} ${cx-r*.18},${y+r*.28} ${cx+r*.18},${y+r*.28}" fill="#fff" opacity=".65"/>
+`).join('')}
+<!-- Haze between ranges -->
+<rect y="390" width="1200" height="34" fill="#c8e2f2" opacity=".14"/>
+<!-- SNOW GROUND — deep winter -->
+<rect y="462" width="1200" height="238" fill="url(#gCsnow)"/>
+<ellipse cx="600" cy="462" rx="710" ry="46" fill="#eaf4ff"/>
+<ellipse cx="175" cy="476" rx="295" ry="55" fill="#eff7ff"/>
+<ellipse cx="1025" cy="470" rx="310" ry="58" fill="#edf5ff"/>
+<!-- SNOW SPARKLES -->
+${Array.from({length:32},(_,i)=>{const x=25+i*36;const y=468+Math.sin(i*1.4)*18;return`
+<circle cx="${x}" cy="${y}" r="1.6" fill="#fff" opacity=".75"/>
+<line x1="${x-4}" y1="${y}" x2="${x+4}" y2="${y}" stroke="#fff" stroke-width=".7" opacity=".5"/>
+<line x1="${x}" y1="${y-4}" x2="${x}" y2="${y+4}" stroke="#fff" stroke-width=".7" opacity=".5"/>
+`;}).join('')}
+<!-- SNOW-LADEN PINES — left -->
+${[[88,342,5,24,'#083206'],[152,330,5.5,26,'#083206']].map(([x,yb,tiers,tw,col])=>{const trH=tiers*28;let s=`<rect x="${x-10}" y="${yb-trH}" width="20" height="${trH+12}" fill="#301c08"/>`;for(let t=0;t<tiers;t++){const w=tw+t*22;const ty=yb-trH+t*28;s+=`<polygon points="${x},${ty-28} ${x-w},${ty} ${x+w},${ty}" fill="${col}" opacity="${.92-t*.04}"/>`;
+s+=`<polygon points="${x},${ty-28} ${x-w*.52},${ty} ${x+w*.52},${ty}" fill="#eef8ff" opacity="${.9-t*.1}"/>`;}
+s+=`<ellipse cx="${x}" cy="${yb-trH+4}" rx="${tw*.45}" ry="10" fill="#fff" opacity=".6"/>`;return s;}).join('')}
+<!-- Right pines -->
+${[[1108,336,5,24,'#083206'],[1050,328,5.5,26,'#083206']].map(([x,yb,tiers,tw,col])=>{const trH=tiers*28;let s=`<rect x="${x-10}" y="${yb-trH}" width="20" height="${trH+12}" fill="#301c08"/>`;for(let t=0;t<tiers;t++){const w=tw+t*22;const ty=yb-trH+t*28;s+=`<polygon points="${x},${ty-28} ${x-w},${ty} ${x+w},${ty}" fill="${col}" opacity="${.9-t*.04}"/>`;
+s+=`<polygon points="${x},${ty-28} ${x-w*.52},${ty} ${x+w*.52},${ty}" fill="#eef8ff" opacity="${.88-t*.1}"/>`;}return s;}).join('')}
+<!-- Mid trees -->
+${Array.from({length:7},(_,i)=>{const x=248+i*142;const y=460;const tiers=4+Math.floor(i*.4);const tw=22;let s='';for(let t=0;t<tiers;t++){const w=tw+t*18;const ty=y-tiers*24+t*24;s+=`<polygon points="${x},${ty-24} ${x-w},${ty} ${x+w},${ty}" fill="#0a2c08" opacity="${.88-t*.04}"/>`;
+s+=`<polygon points="${x},${ty-24} ${x-w*.5},${ty} ${x+w*.5},${ty}" fill="#eef8ff" opacity="${.7-t*.1}"/>`;}return`<rect x="${x-7}" y="${y-tiers*24}" width="14" height="${tiers*24+8}" fill="#2c1808"/>${s}`;}).join('')}
+<!-- COTTAGE — exhaustive stone detail -->
+<rect x="386" y="275" width="428" height="214" fill="url(#gCstone)"/>
+<!-- Stone courses — 12 rows -->
+${Array.from({length:12},(_,i)=>`<line x1="386" y1="${295+i*16}" x2="814" y2="${295+i*16}" stroke="#a09888" stroke-width=".85" opacity=".52"/>`).join('')}
+<!-- Staggered joints -->
+${Array.from({length:12},(_,row)=>Array.from({length:12},(_,col)=>`<line x1="${386+col*38+(row%2)*19}" y1="${295+row*16}" x2="${386+col*38+(row%2)*19}" y2="${311+row*16}" stroke="#a09888" stroke-width=".65" opacity=".4"/>`).join('')).join('')}
+<!-- Individual stone shading -->
+${Array.from({length:12},(_,row)=>Array.from({length:12},(_,col)=>{const shade=Math.sin(row*col*1.9)*.05;return`<rect x="${387+col*38+(row%2)*19+1}" y="${296+row*16+1}" width="36" height="14" fill="hsl(35,20%,${62+shade*100}%)" opacity=".32" rx="1"/>`;}).join('')).join('')}
+<!-- Corner quoins -->
+${Array.from({length:14},(_,i)=>`<rect x="386" y="${275+i*16}" width="30" height="12" fill="#d0c0a8" opacity=".42" rx="1"/>
+<rect x="784" y="${275+i*16}" width="30" height="12" fill="#d0c0a8" opacity=".42" rx="1"/>`).join('')}
+<!-- STEEP SNOW ROOF -->
+<polygon points="354,275 600,112 846,275" fill="#aac0d4"/>
+<!-- Roof tiles -->
+${Array.from({length:9},(_,row)=>{const rw=row*28+10;const nT=Math.max(1,Math.floor(rw*1.8/22));const sX=600-rw;const y=126+row*14;return Array.from({length:nT},(_,col)=>`<path d="M${sX+col*22},${y} Q${sX+col*22+11},${y-7} ${sX+col*22+22},${y} L${sX+col*22+22},${y+12} L${sX+col*22},${y+12} Z" fill="#8898a8" opacity=".68"/>`).join('');}).join('')}
+<!-- Snow on roof — thick accumulation -->
+<polygon points="346,278 600,108 854,278 846,296 600,128 354,296" fill="url(#gCsnow)" opacity=".97"/>
+<!-- Snow ridge mound -->
+<ellipse cx="600" cy="118" rx="24" ry="14" fill="#fff" opacity=".82"/>
+<!-- Icicles -->
+${Array.from({length:30},(_,i)=>{const x=354+i*16;const h=8+Math.sin(i*1.8)*14;return`<polygon points="${x+2},294 ${x+6},294 ${x+4},${294+h}" fill="#d4eeff" opacity=".82"/>`;}).join('')}
+<!-- TWIN CHIMNEYS -->
+${[[614,142,38,108],[688,150,32,96]].map(([x,y,w,h])=>`
+<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#a89878"/>
+${Array.from({length:Math.floor(h/18)},(_,i)=>`<line x1="${x}" y1="${y+16+i*18}" x2="${x+w}" y2="${y+16+i*18}" stroke="#908060" stroke-width=".9" opacity=".5"/>`).join('')}
+<line x1="${x+w/2}" y1="${y}" x2="${x+w/2}" y2="${y+h}" stroke="#908060" stroke-width=".8" opacity=".42"/>
+<rect x="${x-6}" y="${y-4}" width="${w+12}" height="12" fill="#baa888" rx="3"/>
+<rect x="${x-8}" y="${y-9}" width="${w+16}" height="8" fill="#c8b898" rx="2"/>
+`).join('')}
+<!-- Smoke — 5 wisps per chimney -->
+${[[633,133],[704,141]].map(([cx,y])=>Array.from({length:5},(_,i)=>
+`<path d="M${cx+i*3},${y} Q${cx+i*3+12-i*4},${y-22-i*12} ${cx+i*3+6-i*6},${y-42-i*15} Q${cx+i*3-4},${y-58-i*18} ${cx+i*3+8},${y-72-i*20}" fill="none" stroke="#c0c4c8" stroke-width="${9-i*1.5}" stroke-linecap="round" opacity="${.4-i*.07}"/>`).join('')).join('')}
+<!-- WINDOWS — glowing warm light, shutters -->
+${[[422,296,88,104],[690,296,88,104]].map(([x,y,w,h])=>`
+<!-- Window recess -->
+<rect x="${x-4}" y="${y-4}" width="${w+8}" height="${h+8}" fill="#9a8c78" rx="6"/>
+<!-- Glass glow -->
+<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#ffe090" rx="5" opacity=".97"/>
+<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#gCwin)" opacity=".65" rx="5"/>
+<!-- Frost on corners -->
+<path d="M${x},${y} Q${x+8},${y+12} ${x},${y+22}" fill="#c8e4ff" opacity=".3"/>
+<path d="M${x+w},${y} Q${x+w-8},${y+12} ${x+w},${y+22}" fill="#c8e4ff" opacity=".25"/>
+<!-- Glazing bars -->
+<line x1="${x+w/2}" y1="${y}"   x2="${x+w/2}" y2="${y+h}" stroke="#a08850" stroke-width="3"/>
+<line x1="${x}"     y1="${y+h/2}" x2="${x+w}" y2="${y+h/2}" stroke="#a08850" stroke-width="3"/>
+<!-- Window reveal shadow -->
+<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="#8a7840" stroke-width="4" rx="4"/>
+<!-- Sill with snow -->
+<rect x="${x-8}" y="${y+h+2}" width="${w+16}" height="9"  fill="#c0b090" rx="2"/>
+<rect x="${x-8}" y="${y+h}"   width="${w+16}" height="5"  fill="#eef8ff" opacity=".82" rx="1"/>
+`).join('')}
+<!-- Interior silhouettes in windows -->
+<g fill="#c86020" opacity=".4">
+  <!-- Left window — person sitting -->
+  <ellipse cx="452" cy="316" rx="9" ry="9"/>
+  <rect    x="447" y="325" width="10" height="22" rx="4"/>
+  <!-- Right window — cat on sill -->
+  <ellipse cx="730" cy="388" rx="12" ry="6"/>
+  <rect    x="726" y="382" width="8" height="10" rx="3"/>
+  <circle  cx="730" cy="378" r="5"/>
+  <path d="M726,374 Q722,368 724,372"/>
+  <path d="M734,374 Q738,368 736,372"/>
+</g>
+<!-- FRONT DOOR — heavy timber with ornament -->
+<rect x="556" y="382" width="88" height="107" fill="#7a4e28" rx="6 6 0 0"/>
+${Array.from({length:6},(_,i)=>`<line x1="556" y1="${396+i*14}" x2="644" y2="${396+i*14}" stroke="#6a3e18" stroke-width="2" opacity=".5"/>`).join('')}
+<line x1="600" y1="382" x2="600" y2="489" stroke="#6a3e18" stroke-width="2.5" opacity=".45"/>
+<!-- Timber cross braces -->
+<line x1="556" y1="382" x2="644" y2="460" stroke="#5a2e08" stroke-width="2.5" opacity=".38"/>
+<line x1="644" y1="382" x2="556" y2="460" stroke="#5a2e08" stroke-width="2.5" opacity=".38"/>
+<!-- Christmas WREATH -->
+<circle cx="600" cy="408" r="22" fill="none" stroke="#164610" stroke-width="8"/>
+<circle cx="600" cy="408" r="22" fill="none" stroke="#1e5c18" stroke-width="4" opacity=".5"/>
+<!-- Holly berries -->
+<g fill="#c01818"><circle cx="590" cy="400" r="3.2"/><circle cx="597" cy="397" r="3.2"/><circle cx="604" cy="400" r="3.2"/></g>
+<!-- Bow -->
+<ellipse cx="594" cy="390" rx="9" ry="5"  fill="#c01818" opacity=".88" transform="rotate(-22,594,390)"/>
+<ellipse cx="606" cy="390" rx="9" ry="5"  fill="#c01818" opacity=".88" transform="rotate(22,606,390)"/>
+<ellipse cx="600" cy="390" rx="4.5" ry="4.5" fill="#d82020"/>
+<!-- Door knocker -->
+<circle cx="628" cy="438" r="7" fill="#c8a028" stroke="#a88018" stroke-width="1.5"/>
+<!-- STONE STEPS with snow -->
+<rect x="540" y="487" width="120" height="13" fill="#b0a490" rx="3"/>
+<rect x="527" y="498" width="146" height="13" fill="#c0b4a2" rx="3"/>
+<rect x="540" y="483" width="120" height="6"  fill="#f0f8ff" opacity=".78" rx="1"/>
+<rect x="527" y="494" width="146" height="6"  fill="#f0f8ff" opacity=".68" rx="1"/>
+<!-- PICKET FENCE — both sides, snow capped -->
+${[...Array.from({length:10},(_,i)=>({x:295+i*28,side:'L'})),...Array.from({length:10},(_,i)=>({x:905+i*28,side:'R'}))].map(({x})=>`
+<rect x="${x}" y="442" width="14" height="74" fill="#d0c8b8" rx="7 7 0 0"/>
+<rect x="${x}" y="439" width="14" height="8"  fill="#f0f8ff" opacity=".88" rx="3"/>
+<circle cx="${x+7}" cy="442" r="3.5" fill="#e0d8c8" opacity=".6"/>
+`).join('')}
+<!-- Fence rails -->
+<rect x="290" y="464" width="294" height="11" fill="#d8d0c0" rx="4"/>
+<rect x="290" y="482" width="294" height="11" fill="#d8d0c0" rx="4"/>
+<rect x="900" y="464" width="294" height="11" fill="#d8d0c0" rx="4"/>
+<rect x="900" y="482" width="294" height="11" fill="#d8d0c0" rx="4"/>
+<!-- Snow on fence rails -->
+<rect x="290" y="461" width="294" height="5" fill="#f0f8ff" opacity=".65" rx="2"/>
+<rect x="900" y="461" width="294" height="5" fill="#f0f8ff" opacity=".65" rx="2"/>
+<!-- FOOTPRINTS to door -->
+${Array.from({length:7},(_,i)=>{const x=497+i*19+(i%2)*10;const y=500+i*3;return`<ellipse cx="${x}" cy="${y}" rx="7" ry="10" fill="#ddeeff" opacity=".68" transform="rotate(${i%2===0?-12:12},${x},${y})"/>`;}).join('')}
+<!-- SLED leaning on fence -->
+<g transform="translate(882,462) rotate(-15)">
+  <rect x="-58" y="-14" width="116" height="12" fill="#9a7848" rx="4"/>
+  <rect x="-58" y="2"   width="116" height="12" fill="#9a7848" rx="4"/>
+  ${Array.from({length:8},(_,i)=>`<rect x="${-55+i*16}" y="-16" width="10" height="30" fill="#b09060" rx="2"/>`).join('')}
+  <ellipse cx="-30" cy="20" rx="24" ry="7" fill="#7a6040" opacity=".82"/>
+  <ellipse cx="30"  cy="20" rx="24" ry="7" fill="#7a6040" opacity=".82"/>
+  <!-- Runner bolts -->
+  ${[-42,-14,14,42].map(x=>`<circle cx="${x}" cy="18" r="2.5" fill="#906030"/>`).join('')}
+</g>
+
+<!-- SNOWFALL — falling snowflakes -->
+${Array.from({length:55},(_,i)=>{const x=(i*137+23)%1200;const y=(i*89+11)%650;const r=1+Math.sin(i)*.8;const op=.35+Math.sin(i*1.3)*.25;return`<circle cx="${x}" cy="${y}" r="${r.toFixed(1)}" fill="#fff" opacity="${op.toFixed(2)}"/>`;}).join('')}
+<!-- Larger snowflake crystals -->
+${Array.from({length:12},(_,i)=>{const x=(i*203+55)%1150;const y=(i*127+30)%600;return`
+<g transform="translate(${x},${y})" stroke="#fff" stroke-width=".8" opacity=".45">
+  ${Array.from({length:6},(_,j)=>{const a=j*60*Math.PI/180;return`<line x1="0" y1="0" x2="${Math.cos(a)*8}" y2="${Math.sin(a)*8}"/>
+  <line x1="${Math.cos(a)*4}" y1="${Math.sin(a)*4}" x2="${Math.cos(a+0.5)*7}" y2="${Math.sin(a+0.5)*7}"/>
+  <line x1="${Math.cos(a)*4}" y1="${Math.sin(a)*4}" x2="${Math.cos(a-0.5)*7}" y2="${Math.sin(a-0.5)*7}"/>`;}).join('')}
+</g>`;}).join('')}
+<!-- Robin redbreast on fence -->
+<g transform="translate(345,452)" opacity=".82">
+  <ellipse cx="0" cy="8" rx="13" ry="10" fill="#8090a0"/>
+  <ellipse cx="0" cy="6" rx="10" ry="8" fill="#90a0b0"/>
+  <!-- Red breast -->
+  <ellipse cx="4" cy="6" rx="7" ry="6" fill="#d85020" opacity=".88"/>
+  <!-- Head -->
+  <circle cx="12" cy="0" r="8" fill="#8090a0"/>
+  <!-- Red on head -->
+  <ellipse cx="14" cy="-1" rx="5" ry="5" fill="#d85020" opacity=".65"/>
+  <!-- Eye -->
+  <circle cx="18" cy="-2" r="2.5" fill="#1a1a28"/>
+  <circle cx="19" cy="-3" r="1" fill="#fff" opacity=".65"/>
+  <!-- Beak -->
+  <polygon points="22,0 32,-2 22,3" fill="#f0c820"/>
+  <!-- Wing detail -->
+  ${Array.from({length:4},(_,i)=>`<path d="M${-10+i*5},4 Q${-8+i*5},12 ${-10+i*5},18" fill="none" stroke="#7888a0" stroke-width=".9" opacity=".45"/>`).join('')}
+  <!-- Tail -->
+  <path d="M-13,12 Q-22,20 -20,28" fill="none" stroke="#7888a0" stroke-width="4" stroke-linecap="round"/>
+</g>
+<!-- Second bird (bullfinch) -->
+<g transform="translate(982,455)" opacity=".78">
+  <ellipse cx="0" cy="8" rx="12" ry="9" fill="#2a2838"/>
+  <ellipse cx="0" cy="7" rx="9" ry="7" fill="#d83030" opacity=".82"/>
+  <circle cx="11" cy="0" r="7.5" fill="#2a2838"/>
+  <polygon points="17,1 26,-1 17,4" fill="#888" opacity=".7"/>
+  <circle cx="16" cy="-1" r="1.5" fill="#1a1a22"/>
+  <circle cx="17" cy="-2" r=".8" fill="#fff" opacity=".6"/>
+</g>
+<!-- DEER TRACKS in snow -->
+${Array.from({length:6},(_,i)=>`
+<g transform="translate(${175+i*42},${485+Math.sin(i*.8)*8}) rotate(${8+Math.sin(i)*5})">
+  <ellipse cx="-4" cy="0" rx="5" ry="7" fill="#d8eeff" opacity=".62"/>
+  <ellipse cx="4" cy="0" rx="5" ry="7" fill="#d8eeff" opacity=".62"/>
+</g>`).join('')}
+<!-- Icicles from trees -->
+${Array.from({length:8},(_,i)=>{const x=250+i*88;const h=12+Math.sin(i*2.3)*18;return`<polygon points="${x+1},298 ${x+5},298 ${x+3},${298+h}" fill="#d4eeff" opacity=".72"/>`;}).join('')}
+<!-- Snowdrift at fence base -->
+<path d="M290,500 Q380,485 470,495 Q560,505 584,492" fill="#edf8ff" opacity=".55"/>
+<path d="M900,498 Q980,484 1060,494 Q1140,504 1194,490" fill="#edf8ff" opacity=".52"/>
+<!-- Lantern by door lit -->
+<g transform="translate(540,402)">
+  <rect x="-10" y="-28" width="20" height="30" fill="#8a6840" rx="3" opacity=".85"/>
+  <rect x="-8"  y="-26" width="16" height="26" fill="#ffee80" rx="2" opacity=".9"/>
+  <rect x="-10" y="-30" width="20" height="5"  fill="#7a5828" rx="2" opacity=".8"/>
+  <rect x="-10" y="2"   width="20" height="5"  fill="#7a5828" rx="2" opacity=".8"/>
+  <line x1="-2" y1="-30" x2="-2" y2="2" stroke="#9a7840" stroke-width=".8" opacity=".4"/>
+  <line x1="2"  y1="-30" x2="2"  y2="2" stroke="#9a7840" stroke-width=".8" opacity=".4"/>
+  <!-- Glow -->
+  <ellipse cx="0" cy="-12" rx="22" ry="28" fill="#ffee80" opacity=".12"/>
+  <line x1="0" y1="-30" x2="0" y2="-42" stroke="#7a5828" stroke-width="2.5"/>
+</g>
+<!-- SECOND LANTERN right of door -->
+<g transform="translate(660,402)">
+  <rect x="-10" y="-28" width="20" height="30" fill="#8a6840" rx="3" opacity=".82"/>
+  <rect x="-8"  y="-26" width="16" height="26" fill="#ffee80" rx="2" opacity=".88"/>
+  <rect x="-10" y="-30" width="20" height="5"  fill="#7a5828" rx="2" opacity=".8"/>
+  <rect x="-10" y="2"   width="20" height="5"  fill="#7a5828" rx="2" opacity=".8"/>
+  <ellipse cx="0" cy="-12" rx="22" ry="28" fill="#ffee80" opacity=".1"/>
+  <line x1="0" y1="-30" x2="0" y2="-42" stroke="#7a5828" stroke-width="2.5"/>
+</g>
+<!-- Woodpile with axe -->
+<g transform="translate(868,458)" opacity=".72">
+  ${Array.from({length:5},(_,i)=>`
+  <ellipse cx="${i*8}" cy="-${i*2}" rx="14" ry="10" fill="#8a5828"/>
+  <ellipse cx="${i*8}" cy="-${i*2}" rx="11" ry="7" fill="#6a3818" opacity=".5"/>
+  ${Array.from({length:4},(_,j)=>`<circle cx="${i*8}" cy="-${i*2}" r="${2+j*3}" fill="none" stroke="#7a4820" stroke-width=".6" opacity=".4"/>`).join('')}`).join('')}
+  <!-- Axe stuck in top log -->
+  <rect x="42" y="-50" width="5" height="60" fill="#7a5028" rx="2" transform="rotate(8,44,-20)"/>
+  <path d="M38,-52 Q28,-62 48,-58 Q54,-46 44,-44" fill="#9a9898" transform="rotate(8,44,-20)"/>
+</g>
+<!-- BIRD TRACKS in snow -->
+${Array.from({length:8},(_,i)=>{const x=340+i*42;const y=476+Math.sin(i*.7)*8;return`
+<line x1="${x-4}" y1="${y}"   x2="${x}"   y2="${y+4}" stroke="#c0d0e8" stroke-width="1.2" opacity=".6"/>
+<line x1="${x+4}" y1="${y}"   x2="${x}"   y2="${y+4}" stroke="#c0d0e8" stroke-width="1.2" opacity=".6"/>
+<line x1="${x}"   y1="${y+4}" x2="${x}"   y2="${y+9}" stroke="#c0d0e8" stroke-width="1.2" opacity=".6"/>
+`;}).join('')}
+`,egg:{x:556,y:496,w:24,h:32,color:'#dceeff',stroke:'#b8ccdc',opacity:.46,pattern:'none'}}
+
+]; // end SCENES
+
+// ─── ENGINE ────────────────────────────────────────────────────
+let playerName='',currentScene=0,totalFound=0,startTime=null,timerInterval=null,hintActive=false,scores=[];
+try{scores=JSON.parse(localStorage.getItem('vajicka_v5')||'[]');}catch(e){scores=[];}
+function saveScores(){try{localStorage.setItem('vajicka_v5',JSON.stringify(scores));}catch(e){}}
+function formatTime(ms){const s=Math.floor(ms/1000);return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+function buildDots(){const w=document.getElementById('hud-progress');w.innerHTML='';for(let i=0;i<12;i++){const d=document.createElement('div');d.className='egg-dot';d.id=`dot-${i}`;w.appendChild(d);}}
+function renderScene(idx){const sc=SCENES[idx];const svg=document.getElementById('scene-canvas');const old=document.getElementById('egg-hotspot');if(old)old.remove();svg.innerHTML=sc.svg;document.getElementById('hud-scene-name').textContent=sc.name;placeEgg(sc.egg,idx);}
+function placeEgg(e,si){const svg=document.getElementById('scene-canvas');const ns='http://www.w3.org/2000/svg';const g=document.createElementNS(ns,'g');g.id='egg-hotspot';g.style.cursor='crosshair';const egg=document.createElementNS(ns,'ellipse');egg.setAttribute('cx',e.x);egg.setAttribute('cy',e.y);egg.setAttribute('rx',e.w/2);egg.setAttribute('ry',e.h/2);egg.setAttribute('fill',e.color);egg.setAttribute('stroke',e.stroke);egg.setAttribute('stroke-width','1.5');egg.setAttribute('opacity',e.opacity);g.appendChild(egg);
+if(e.pattern==='stripes-light'||e.pattern==='stripes-dark'){const sc=e.pattern==='stripes-light'?'rgba(255,255,255,0.22)':'rgba(0,0,0,0.14)';for(let i=-2;i<6;i++){const l=document.createElementNS(ns,'line');l.setAttribute('x1',e.x-e.w/2);l.setAttribute('y1',e.y-e.h/2+i*12);l.setAttribute('x2',e.x+e.w/2);l.setAttribute('y2',e.y-e.h/2+i*12);l.setAttribute('stroke',sc);l.setAttribute('stroke-width','4');l.setAttribute('opacity','.7');g.appendChild(l);}}
+if(e.pattern==='dots'){for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const c=document.createElementNS(ns,'circle');c.setAttribute('cx',e.x+dx*10);c.setAttribute('cy',e.y+dy*12);c.setAttribute('r','2.5');c.setAttribute('fill','rgba(255,255,255,0.2)');g.appendChild(c);}}
+g.addEventListener('pointerdown',ev=>{ev.preventDefault();eggFound(si);});
+g.addEventListener('mouseenter',()=>egg.setAttribute('stroke-width','2.5'));
+g.addEventListener('mouseleave',()=>{if(!hintActive)egg.setAttribute('stroke-width','1.5');});
+svg.appendChild(g);}
+
+function updateProximityGlow(clientX,clientY){
+  if(!startTime)return;
+  const sc=SCENES[currentScene];
+  const wrap=document.getElementById('scene-wrap');
+  const rect=wrap.getBoundingClientRect();
+  const sx=(clientX-rect.left)*(1200/rect.width);
+  const sy=(clientY-rect.top)*(700/rect.height);
+  const dist=Math.sqrt((sx-sc.egg.x)**2+(sy-sc.egg.y)**2);
+  const glow=document.getElementById('cursor-glow');
+  glow.style.left=clientX+'px';
+  glow.style.top=clientY+'px';
+  if(dist<95){
+    const in2=Math.max(0,(95-dist)/95);
+    glow.style.background=`radial-gradient(circle, rgba(255,230,80,${(in2*.45).toFixed(2)}) 0%, transparent 70%)`;
+    glow.style.width=glow.style.height=(60+in2*72)+'px';
+  }else{
+    glow.style.background='none';
+    glow.style.width=glow.style.height='60px';
+  }
+}
+
+document.addEventListener('pointermove',e=>updateProximityGlow(e.clientX,e.clientY),{passive:true});
+document.addEventListener('pointerdown',e=>updateProximityGlow(e.clientX,e.clientY),{passive:true});
+function eggFound(si){if(si!==currentScene)return;totalFound++;document.getElementById(`dot-${si}`).classList.add('found');document.getElementById('hud-count').textContent=`${totalFound} / 12`;const g=document.getElementById('egg-hotspot');if(g){g.style.transition='transform .45s, opacity .45s';g.style.transformOrigin=`${SCENES[currentScene].egg.x}px ${SCENES[currentScene].egg.y}px`;g.style.transform='scale(2.2)';g.style.opacity='0';g.style.pointerEvents='none';}spawnParticles();showToast(si+1);if(totalFound===12)setTimeout(endGame,2000);else setTimeout(loadNextScene,1900);}
+function loadNextScene(){currentScene++;hintActive=false;const w=document.getElementById('scene-wrap');w.style.opacity='0';w.style.transition='opacity .45s';setTimeout(()=>{renderScene(currentScene);w.style.opacity='1';},450);}
+function spawnParticles(){const cols=['#ff8a65','#ffd54f','#a5d6a7','#90caf9','#f48fb1','#ce93d8','#fff9c4','#80deea'];for(let i=0;i<24;i++){const p=document.createElement('div');p.className='particle';const sz=5+Math.random()*13;const dx=(Math.random()-.5)*260;const dy=-75-Math.random()*155;p.style.cssText=`width:${sz}px;height:${sz}px;background:${cols[Math.floor(Math.random()*cols.length)]};left:50%;top:50%;--dx:${dx}px;--dy:${dy}px;`;document.body.appendChild(p);setTimeout(()=>p.remove(),960);}}
+let toastTimer=null;
+function showToast(num){const sc=SCENES[num-1];const msgs=['Skvělý nález!','Výborně!','Tak schované bylo!','Oko jako sokol!','Báječné!','Gratuluji!','Tady jsi to čekal?','Mistrovský tah!','Jsi neuvěřitelný/á!','Úžasné!','Hurá!','Poslední vajíčko!'];const emojis=['🌧️','🌸','⚓','🏛️','🌲','🌫️','🧺','🐸','🍂','🌾','🌙','🏔️'];document.getElementById('toast-emoji').textContent=emojis[num-1]||'🥚';document.getElementById('toast-num').textContent=`${num}/12`;document.getElementById('toast-name').textContent=sc.name;document.getElementById('toast-msg').textContent=' — '+msgs[num-1];const t=document.getElementById('find-toast');t.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
+document.getElementById('hint-btn').addEventListener('click',()=>{hintActive=!hintActive;const g=document.getElementById('egg-hotspot');if(!g)return;const egg=g.querySelector('ellipse');if(hintActive){egg.setAttribute('opacity',Math.min(1,parseFloat(SCENES[currentScene].egg.opacity)+0.42));egg.setAttribute('stroke-width','3');egg.setAttribute('filter','drop-shadow(0 0 12px rgba(255,220,50,0.95))');document.getElementById('hint-btn').textContent='🙈 Skrýt nápovědu';}else{egg.setAttribute('opacity',SCENES[currentScene].egg.opacity);egg.setAttribute('stroke-width','1.5');egg.removeAttribute('filter');document.getElementById('hint-btn').textContent='💡 Nápověda';}});
+function startTimer(){startTime=Date.now();timerInterval=setInterval(()=>{document.getElementById('hud-timer').textContent=formatTime(Date.now()-startTime);},1000);}
+document.getElementById('start-btn').addEventListener('click',()=>{const n=document.getElementById('name-input').value.trim();if(!n){document.getElementById('name-input').focus();return;}playerName=n;document.getElementById('intro').style.display='none';document.getElementById('game').style.display='block';buildDots();renderScene(0);startTimer();});
+document.getElementById('name-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('start-btn').click();});
+function endGame(){clearInterval(timerInterval);const elapsed=Date.now()-startTime;const entry={name:playerName,eggs:totalFound,ms:elapsed,ts:Date.now()};scores.push(entry);scores.sort((a,b)=>b.eggs-a.eggs||a.ms-b.ms);if(scores.length>50)scores=scores.slice(0,50);saveScores();const rank=scores.findIndex(s=>s.ts===entry.ts&&s.name===entry.name);const heroes=['🏆','🥇','🥈','🥉','🎖️','🏅'];document.getElementById('end-hero').textContent=heroes[Math.min(rank,5)]||'🎉';document.getElementById('end-h2').textContent=totalFound===12?'Všechna vajíčka nalezena!':`Nalezeno ${totalFound} z 12`;document.getElementById('end-sub').textContent=`Procestoval/a jsi ${totalFound} kouzelných světů`;document.getElementById('res-name').textContent=playerName;document.getElementById('res-eggs').textContent=totalFound;document.getElementById('res-time').textContent=formatTime(elapsed);document.getElementById('res-rank').textContent=`#${rank+1} na výsledkové listině`;const lbRows=document.getElementById('lb-rows');lbRows.innerHTML='';const awards=['👑','🌟','✨','🏅','🎖️','🐣','🐣','🐣','🐣','🐣'];const medals=['🥇','🥈','🥉'];scores.slice(0,10).forEach((s,i)=>{const isMe=s.ts===entry.ts;lbRows.innerHTML+=`<div class="lb-row${isMe?' me':''}"><span class="lb-rank">${medals[i]||'#'+(i+1)}</span><span class="lb-name">${s.name}</span><span class="lb-eggs">🥚 ${s.eggs}</span><span class="lb-time">⏱ ${formatTime(s.ms)}</span><span class="lb-award">${awards[i]}</span></div>`;});document.getElementById('game').style.display='none';document.getElementById('end-screen').style.display='flex';}
+document.getElementById('play-again').addEventListener('click',()=>{currentScene=0;totalFound=0;startTime=null;hintActive=false;clearInterval(timerInterval);document.getElementById('hud-timer').textContent='0:00';document.getElementById('end-screen').style.display='none';document.getElementById('name-input').value='';showLbPreview();document.getElementById('intro').style.display='flex';});
+function showLbPreview(){if(!scores.length)return;const div=document.getElementById('lb-preview');let html='<div class="lb-preview-title">Dosavadní nejlepší</div>';const medals=['🥇','🥈','🥉'];scores.slice(0,4).forEach((s,i)=>{html+=`<div class="lb-preview-row"><span class="lbr-rank">${medals[i]||'#'+(i+1)}</span><span class="lbr-name">${s.name}</span><span class="lbr-eggs">🥚 ${s.eggs}</span><span class="lbr-time">⏱ ${formatTime(s.ms)}</span></div>`;});div.innerHTML=html;}
+showLbPreview();
+</script>
+</body>
+</html>
