@@ -168,7 +168,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
   <button id="play-again">Hrát znovu 🐣</button>
 </div>
 
-<script src="config.js?v=20260331"></script>
+<script src="config.js?v=20260331_3"></script>
 <script>
 // ─── SCENE BUILDER HELPERS ───────────────────────────────────
 function rain(count,op){let s='';for(let i=0;i<count;i++){const x=i*(1200/count)+Math.sin(i*3)*12;const y=150+Math.cos(i*2)*40;const l=80+Math.sin(i*1.3)*50;s+=`<line x1="${x}" y1="${y}" x2="${x-l*0.18}" y2="${y+l}" stroke="#9abccc" stroke-width="${.6+Math.sin(i)*.3}" opacity="${op}"/>`;}return s;}
@@ -523,7 +523,7 @@ ${Array.from({length:8},(_,i)=>{const t=i/7;const x=348+t*172;const y=500-Math.s
   <!-- Handle -->
   <path d="-22,-28 Q-35,-18 -32,0" fill="none" stroke="#6a8898" stroke-width="4" stroke-linecap="round"/>
 </g>
-`,egg:{x:72,y:408,w:28,h:36,color:'#52a038',stroke:'#38742a',opacity:.35,pattern:'dots'}},
+`,egg:{x:128,y:408,w:28,h:36,color:'#52a038',stroke:'#38742a',opacity:.35,pattern:'dots'}},
 
 // ══ 3 · PŘÍSTAV PŘI ZÁPADU SLUNCE ════════════════════════════
 {name:"Přístav při západu slunce",svg:`
