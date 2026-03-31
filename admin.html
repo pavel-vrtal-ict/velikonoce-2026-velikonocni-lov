@@ -5,23 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin – dohledání podle e‑mailu</title>
     <style>
-      :root { --bg:#fdf8f0; --card:#fff; --border:#e0d4bc; --green:#3a7d44; --gold:#c9922a; --text:#1a1a2e; }
+      :root { --bg:#fdf8f0; --card:#fff; --border:#e0d4bc; --green:#3a7d44; --gold:#c9922a; --text:#1a1a2e; --muted:#666; }
       body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--text);}
       .wrap{max-width:820px; margin:0 auto; padding:28px 18px 44px;}
       h1{margin:0 0 10px; font-size:1.6rem;}
-      .sub{margin:0 0 18px; color:#666; line-height:1.45;}
+      .sub{margin:0 0 18px; color:var(--muted); line-height:1.45;}
       .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px;}
       label{display:block; font-size:.8rem; letter-spacing:.12em; text-transform:uppercase; color:#777; margin-bottom:8px;}
       input{width:100%; font-size:1.05rem; padding:12px 14px; border:1px solid var(--border); border-radius:12px; outline:none;}
+      input:focus{border-color:#d4b06a; box-shadow:0 0 0 4px #c9922a1c;}
       .row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;}
       button{appearance:none; border:0; border-radius:999px; padding:10px 16px; font-weight:700; cursor:pointer;}
       .primary{background:var(--green); color:#fff;}
       .ghost{background:#fff; border:1px solid var(--border); color:#333;}
       .out{margin-top:14px; padding:12px 14px; background:#fffbf3; border:1px dashed #e8d7b3; border-radius:12px; font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; word-break:break-all;}
-      .hint{margin-top:10px; color:#666; line-height:1.45; font-size:.95rem;}
+      .hint{margin-top:10px; color:var(--muted); line-height:1.45; font-size:.95rem;}
       .ok{color:var(--green); font-weight:700;}
       .warn{color:#b03030; font-weight:700;}
       code{background:#fff; border:1px solid var(--border); border-radius:8px; padding:2px 6px;}
+      .grid{display:grid; gap:12px; grid-template-columns:1fr; margin-top:12px;}
+      .mini{font-size:.86rem; color:#777;}
+      .sql{white-space:pre-wrap;}
+      .pill{display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border-radius:999px; background:#fff; border:1px solid var(--border); color:#333; font-weight:700; text-decoration:none;}
     </style>
   </head>
   <body>
@@ -36,13 +41,23 @@
         <label for="email">Školní e‑mail</label>
         <input id="email" type="email" placeholder="jmeno.prijmeni@szstrebic.cz" autocomplete="email" inputmode="email" />
         <div class="row">
-          <button class="primary" id="btn-hash">Spočítat hash</button>
-          <button class="ghost" id="btn-copy" disabled>Zkopírovat hash</button>
-          <a class="ghost" style="text-decoration:none; display:inline-flex; align-items:center; padding:10px 16px; border-radius:999px;"
-             href="velikonocni_lov_v4.html" target="_blank" rel="noreferrer">Otevřít hru</a>
+          <button class="primary" id="btn-hash">Spočítat</button>
+          <button class="ghost" id="btn-copy-hash" disabled>Zkopírovat hash</button>
+          <button class="ghost" id="btn-copy-sql" disabled>Zkopírovat SQL filtr</button>
+          <a class="pill" href="velikonocni_lov_v4.html" target="_blank" rel="noreferrer">Otevřít hru</a>
         </div>
 
-        <div class="out" id="out">—</div>
+        <div class="grid">
+          <div>
+            <div class="mini">Hash (SHA‑256)</div>
+            <div class="out" id="out-hash">—</div>
+          </div>
+          <div>
+            <div class="mini">SQL filtr (pro Supabase → SQL Editor)</div>
+            <div class="out sql" id="out-sql">—</div>
+          </div>
+        </div>
+
         <div class="hint" id="status"></div>
         <div class="hint">
           Postup v Supabase:
@@ -68,15 +83,19 @@
       }
 
       const elEmail = document.getElementById('email');
-      const elOut = document.getElementById('out');
+      const elOutHash = document.getElementById('out-hash');
+      const elOutSql = document.getElementById('out-sql');
       const elStatus = document.getElementById('status');
       const btnHash = document.getElementById('btn-hash');
-      const btnCopy = document.getElementById('btn-copy');
+      const btnCopyHash = document.getElementById('btn-copy-hash');
+      const btnCopySql = document.getElementById('btn-copy-sql');
 
       async function run() {
         const email = elEmail.value;
-        btnCopy.disabled = true;
-        elOut.textContent = '—';
+        btnCopyHash.disabled = true;
+        btnCopySql.disabled = true;
+        elOutHash.textContent = '—';
+        elOutSql.textContent = '—';
         elStatus.textContent = '';
 
         if (!isSchoolEmail(email)) {
@@ -86,9 +105,11 @@
         }
         try {
           const h = await sha256Hex(normalizeEmail(email));
-          elOut.textContent = h;
-          btnCopy.disabled = false;
-          elStatus.innerHTML = `<span class="ok">OK.</span> Hash zkopíruj a filtruj podle <code>email_hash</code> v Supabase.`;
+          elOutHash.textContent = h;
+          elOutSql.textContent = `select id, nick, eggs, ms, ts, created_at\nfrom public.vajicka_scores\nwhere email_hash = '${h}'\norder by created_at desc\nlimit 50;`;
+          btnCopyHash.disabled = false;
+          btnCopySql.disabled = false;
+          elStatus.innerHTML = `<span class="ok">OK.</span> Můžeš zkopírovat hash nebo rovnou SQL filtr.`;
         } catch (e) {
           elStatus.innerHTML = `<span class="warn">Nelze spočítat hash.</span> Zkus jiný prohlížeč.`;
         }
@@ -96,10 +117,19 @@
 
       btnHash.addEventListener('click', run);
       elEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
-      btnCopy.addEventListener('click', async () => {
+      btnCopyHash.addEventListener('click', async () => {
         try {
-          await navigator.clipboard.writeText(elOut.textContent);
+          await navigator.clipboard.writeText(elOutHash.textContent);
           elStatus.innerHTML = `<span class="ok">Zkopírováno.</span>`;
+        } catch (e) {
+          elStatus.innerHTML = `<span class="warn">Kopírování se nepovedlo.</span> Označ a zkopíruj ručně.`;
+        }
+      });
+
+      btnCopySql.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(elOutSql.textContent);
+          elStatus.innerHTML = `<span class="ok">SQL zkopírováno.</span>`;
         } catch (e) {
           elStatus.innerHTML = `<span class="warn">Kopírování se nepovedlo.</span> Označ a zkopíruj ručně.`;
         }
