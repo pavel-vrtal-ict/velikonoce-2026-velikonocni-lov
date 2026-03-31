@@ -27,6 +27,11 @@ Pro sdílené statistiky (celá škola dohromady) je potřeba jednoduché úlož
 - Do sdíleného úložiště se ukládá jen **otisk (SHA‑256 hash) e‑mailu**, ne e‑mail v čitelné podobě.
 - Dohledání “kdo je za nickem” se dělá tak, že organizátor vezme e‑mail, spočítá stejný hash a vyhledá ho v tabulce.
 
+### Admin dohledání
+
+- Otevři `admin.html` na GitHub Pages a spočítej hash e‑mailu.
+- V Supabase (Table Editor) filtruj tabulku `vajicka_scores` podle `email_hash`.
+
 ### Nastavení Supabase (stručně)
 
 1. V Supabase vytvoř projekt.
