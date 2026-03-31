@@ -17,6 +17,9 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 #intro label{font-size:.8rem;letter-spacing:.12em;color:#888;text-transform:uppercase}
 #name-input{font-family:'Playfair Display',serif;font-size:1.3rem;border:none;border-bottom:2px solid var(--gold);background:transparent;text-align:center;padding:8px 20px;width:260px;color:var(--dark);outline:none}
 #name-input::placeholder{color:#ccc}
+.small-note{font-size:.78rem;color:#777;line-height:1.35;text-align:center;max-width:520px;padding:0 20px;margin-top:10px}
+#email-input{font-family:'Lato',sans-serif;font-size:1rem;border:1px solid #e0d4bc;background:#fff8;text-align:center;padding:10px 16px;width:320px;color:var(--dark);outline:none;border-radius:12px}
+#email-input::placeholder{color:#bbb}
 #start-btn{font-family:'Lato',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.15em;text-transform:uppercase;background:var(--green);color:#fff;border:none;padding:14px 42px;border-radius:50px;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px #3a7d4433}
 #start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px #3a7d4455}
 .intro-deco{font-size:2.5rem;margin-bottom:20px;animation:float 3s ease-in-out infinite}
@@ -77,7 +80,18 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
   <div class="intro-deco">🐣</div>
   <h1>Velikonoční<br><em>lov vajíček</em></h1>
   <p class="sub">12 vajíček ukrytých ve 12 jedinečných světech.<br>Hledej pozorně — mnohá téměř splynou s prostředím.</p>
-  <div class="name-box"><label>Tvoje jméno</label><input id="name-input" type="text" placeholder="Napište jméno…" maxlength="22" autocomplete="off"/></div>
+  <div class="name-box">
+    <label>Přezdívka (nick)</label>
+    <input id="name-input" type="text" placeholder="Napište přezdívku…" maxlength="22" autocomplete="off"/>
+  </div>
+  <div class="name-box" style="margin-top:6px">
+    <label>E‑mail pro dohledání (nezobrazuje se)</label>
+    <input id="email-input" type="email" placeholder="např. jmeno.prijmeni@szstrebic.cz" maxlength="64" autocomplete="email" inputmode="email"/>
+  </div>
+  <div class="small-note">
+    E‑mail se <strong>nezobrazuje</strong> ve výsledkové listině. Slouží pouze pro dohledání, kdo je za přezdívkou.
+    Pro sdílené statistiky se může ukládat jen jeho <strong>otisk (hash)</strong>.
+  </div>
   <button id="start-btn">Začít hledání</button>
   <div class="lb-preview" id="lb-preview"></div>
 </div>
@@ -105,6 +119,17 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
     <div class="result-name" id="res-name"></div>
     <div class="result-stats"><div class="stat"><strong id="res-eggs"></strong><span>vajíček</span></div><div class="stat"><strong id="res-time"></strong><span>čas</span></div></div>
     <div class="result-rank" id="res-rank"></div>
+  </div>
+  <div class="my-result-card" id="stats-card" style="padding:16px 22px">
+    <div style="font-family:'Playfair Display',serif;font-size:1.05rem;color:#666;margin-bottom:8px">Statistiky</div>
+    <div class="result-stats" style="gap:18px">
+      <div class="stat"><strong id="st-plays">–</strong><span>her</span></div>
+      <div class="stat"><strong id="st-unique">–</strong><span>nicků</span></div>
+      <div class="stat"><strong id="st-avg">–</strong><span>průměr</span></div>
+    </div>
+    <div style="margin-top:10px;font-size:.78rem;color:#888;line-height:1.35">
+      Pokud je zapnutý školní režim (sdílené ukládání), jsou statistiky společné pro celou školu. Jinak jsou jen pro toto zařízení.
+    </div>
   </div>
   <div class="leaderboard"><div class="lb-title">Výsledková listina</div><div id="lb-rows"></div></div>
   <button id="play-again">Hrát znovu 🐣</button>
@@ -2445,9 +2470,77 @@ ${Array.from({length:8},(_,i)=>{const x=340+i*42;const y=476+Math.sin(i*.7)*8;re
 ]; // end SCENES
 
 // ─── ENGINE ────────────────────────────────────────────────────
-let playerName='',currentScene=0,totalFound=0,startTime=null,timerInterval=null,hintActive=false,scores=[];
-try{scores=JSON.parse(localStorage.getItem('vajicka_v5')||'[]');}catch(e){scores=[];}
-function saveScores(){try{localStorage.setItem('vajicka_v5',JSON.stringify(scores));}catch(e){}}
+// Optional shared (school-wide) statistics/leaderboard via Supabase.
+// Leave empty to keep everything local (per device).
+const SUPABASE_URL = '';
+const SUPABASE_ANON_KEY = '';
+const SUPABASE_TABLE = 'vajicka_scores';
+
+const LOCAL_STORAGE_KEY = 'vajicka_v6_local';
+const remoteEnabled = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+let playerName='',playerEmailHash='',currentScene=0,totalFound=0,startTime=null,timerInterval=null,hintActive=false,scores=[];
+try{scores=JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)||'[]');}catch(e){scores=[];}
+function saveScores(){try{localStorage.setItem(LOCAL_STORAGE_KEY,JSON.stringify(scores));}catch(e){}}
+
+function normalizeEmail(s){return (s||'').trim().toLowerCase();}
+async function sha256Hex(str){
+  const data=new TextEncoder().encode(str);
+  const digest=await crypto.subtle.digest('SHA-256',data);
+  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function sbFetch(path,{method='GET',body}={}){
+  const url=`${SUPABASE_URL}${path}`;
+  const headers={
+    'apikey':SUPABASE_ANON_KEY,
+    'Authorization':`Bearer ${SUPABASE_ANON_KEY}`,
+    'Content-Type':'application/json',
+    'Prefer':'return=representation'
+  };
+  const res=await fetch(url,{method,headers,body:body?JSON.stringify(body):undefined});
+  if(!res.ok){
+    const txt=await res.text().catch(()=>String(res.status));
+    throw new Error(`Supabase ${res.status}: ${txt}`);
+  }
+  return await res.json();
+}
+
+async function loadScoresRemote(limit=50){
+  if(!remoteEnabled) return [];
+  const qs=`?select=id,nick,eggs,ms,ts&order=eggs.desc,ms.asc&limit=${limit}`;
+  return await sbFetch(`/rest/v1/${SUPABASE_TABLE}${qs}`);
+}
+
+async function saveScoreRemote(entry){
+  if(!remoteEnabled) return null;
+  const rows=await sbFetch(`/rest/v1/${SUPABASE_TABLE}`,{method:'POST',body:[entry]});
+  return rows && rows[0] ? rows[0] : null;
+}
+
+function setStats({plays,unique,avgMs}){
+  document.getElementById('st-plays').textContent=plays==null?'–':String(plays);
+  document.getElementById('st-unique').textContent=unique==null?'–':String(unique);
+  document.getElementById('st-avg').textContent=avgMs==null?'–':formatTime(avgMs);
+}
+
+async function refreshStats(){
+  try{
+    if(remoteEnabled){
+      // lightweight aggregate via top-N sample; good enough for school fun use
+      const all=await loadScoresRemote(1000);
+      const plays=all.length;
+      const unique=new Set(all.map(s=>String(s.nick||'').trim()).filter(Boolean)).size;
+      const avgMs=plays?Math.round(all.reduce((a,b)=>a+(b.ms||0),0)/plays):null;
+      setStats({plays,unique,avgMs});
+      return;
+    }
+  }catch(e){}
+  const plays=scores.length;
+  const unique=new Set(scores.map(s=>String(s.name||'').trim()).filter(Boolean)).size;
+  const avgMs=plays?Math.round(scores.reduce((a,b)=>a+(b.ms||0),0)/plays):null;
+  setStats({plays,unique,avgMs});
+}
 function formatTime(ms){const s=Math.floor(ms/1000);return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 function buildDots(){const w=document.getElementById('hud-progress');w.innerHTML='';for(let i=0;i<12;i++){const d=document.createElement('div');d.className='egg-dot';d.id=`dot-${i}`;w.appendChild(d);}}
 function renderScene(idx){const sc=SCENES[idx];const svg=document.getElementById('scene-canvas');const old=document.getElementById('egg-hotspot');if(old)old.remove();svg.innerHTML=sc.svg;document.getElementById('hud-scene-name').textContent=sc.name;placeEgg(sc.egg,idx);}
@@ -2489,12 +2582,88 @@ let toastTimer=null;
 function showToast(num){const sc=SCENES[num-1];const msgs=['Skvělý nález!','Výborně!','Tak schované bylo!','Oko jako sokol!','Báječné!','Gratuluji!','Tady jsi to čekal?','Mistrovský tah!','Jsi neuvěřitelný/á!','Úžasné!','Hurá!','Poslední vajíčko!'];const emojis=['🌧️','🌸','⚓','🏛️','🌲','🌫️','🧺','🐸','🍂','🌾','🌙','🏔️'];document.getElementById('toast-emoji').textContent=emojis[num-1]||'🥚';document.getElementById('toast-num').textContent=`${num}/12`;document.getElementById('toast-name').textContent=sc.name;document.getElementById('toast-msg').textContent=' — '+msgs[num-1];const t=document.getElementById('find-toast');t.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
 document.getElementById('hint-btn').addEventListener('click',()=>{hintActive=!hintActive;const g=document.getElementById('egg-hotspot');if(!g)return;const egg=g.querySelector('ellipse');if(hintActive){egg.setAttribute('opacity',Math.min(1,parseFloat(SCENES[currentScene].egg.opacity)+0.42));egg.setAttribute('stroke-width','3');egg.setAttribute('filter','drop-shadow(0 0 12px rgba(255,220,50,0.95))');document.getElementById('hint-btn').textContent='🙈 Skrýt nápovědu';}else{egg.setAttribute('opacity',SCENES[currentScene].egg.opacity);egg.setAttribute('stroke-width','1.5');egg.removeAttribute('filter');document.getElementById('hint-btn').textContent='💡 Nápověda';}});
 function startTimer(){startTime=Date.now();timerInterval=setInterval(()=>{document.getElementById('hud-timer').textContent=formatTime(Date.now()-startTime);},1000);}
-document.getElementById('start-btn').addEventListener('click',()=>{const n=document.getElementById('name-input').value.trim();if(!n){document.getElementById('name-input').focus();return;}playerName=n;document.getElementById('intro').style.display='none';document.getElementById('game').style.display='block';buildDots();renderScene(0);startTimer();});
+document.getElementById('start-btn').addEventListener('click',async()=>{const n=document.getElementById('name-input').value.trim();if(!n){document.getElementById('name-input').focus();return;}
+  const email=document.getElementById('email-input').value.trim();
+  if(!email || !email.includes('@')){document.getElementById('email-input').focus();return;}
+  playerName=n;
+  playerEmailHash='';
+  try{playerEmailHash=await sha256Hex(normalizeEmail(email));}catch(e){playerEmailHash='';}
+  // do not persist raw email
+  document.getElementById('intro').style.display='none';
+  document.getElementById('game').style.display='block';
+  buildDots();renderScene(0);startTimer();
+});
 document.getElementById('name-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('start-btn').click();});
-function endGame(){clearInterval(timerInterval);const elapsed=Date.now()-startTime;const entry={name:playerName,eggs:totalFound,ms:elapsed,ts:Date.now()};scores.push(entry);scores.sort((a,b)=>b.eggs-a.eggs||a.ms-b.ms);if(scores.length>50)scores=scores.slice(0,50);saveScores();const rank=scores.findIndex(s=>s.ts===entry.ts&&s.name===entry.name);const heroes=['🏆','🥇','🥈','🥉','🎖️','🏅'];document.getElementById('end-hero').textContent=heroes[Math.min(rank,5)]||'🎉';document.getElementById('end-h2').textContent=totalFound===12?'Všechna vajíčka nalezena!':`Nalezeno ${totalFound} z 12`;document.getElementById('end-sub').textContent=`Procestoval/a jsi ${totalFound} kouzelných světů`;document.getElementById('res-name').textContent=playerName;document.getElementById('res-eggs').textContent=totalFound;document.getElementById('res-time').textContent=formatTime(elapsed);document.getElementById('res-rank').textContent=`#${rank+1} na výsledkové listině`;const lbRows=document.getElementById('lb-rows');lbRows.innerHTML='';const awards=['👑','🌟','✨','🏅','🎖️','🐣','🐣','🐣','🐣','🐣'];const medals=['🥇','🥈','🥉'];scores.slice(0,10).forEach((s,i)=>{const isMe=s.ts===entry.ts;lbRows.innerHTML+=`<div class="lb-row${isMe?' me':''}"><span class="lb-rank">${medals[i]||'#'+(i+1)}</span><span class="lb-name">${s.name}</span><span class="lb-eggs">🥚 ${s.eggs}</span><span class="lb-time">⏱ ${formatTime(s.ms)}</span><span class="lb-award">${awards[i]}</span></div>`;});document.getElementById('game').style.display='none';document.getElementById('end-screen').style.display='flex';}
-document.getElementById('play-again').addEventListener('click',()=>{currentScene=0;totalFound=0;startTime=null;hintActive=false;clearInterval(timerInterval);document.getElementById('hud-timer').textContent='0:00';document.getElementById('end-screen').style.display='none';document.getElementById('name-input').value='';showLbPreview();document.getElementById('intro').style.display='flex';});
-function showLbPreview(){if(!scores.length)return;const div=document.getElementById('lb-preview');let html='<div class="lb-preview-title">Dosavadní nejlepší</div>';const medals=['🥇','🥈','🥉'];scores.slice(0,4).forEach((s,i)=>{html+=`<div class="lb-preview-row"><span class="lbr-rank">${medals[i]||'#'+(i+1)}</span><span class="lbr-name">${s.name}</span><span class="lbr-eggs">🥚 ${s.eggs}</span><span class="lbr-time">⏱ ${formatTime(s.ms)}</span></div>`;});div.innerHTML=html;}
+async function endGame(){
+  clearInterval(timerInterval);
+  const elapsed=Date.now()-startTime;
+  const ts=Date.now();
+  const entryLocal={name:playerName,eggs:totalFound,ms:elapsed,ts};
+  scores.push(entryLocal);
+  scores.sort((a,b)=>b.eggs-a.eggs||a.ms-b.ms);
+  if(scores.length>50)scores=scores.slice(0,50);
+  saveScores();
+
+  let remoteId=null;
+  if(remoteEnabled){
+    try{
+      const created=await saveScoreRemote({nick:playerName,eggs:totalFound,ms:elapsed,ts,email_hash:playerEmailHash||null});
+      remoteId=created && created.id ? created.id : null;
+    }catch(e){}
+  }
+
+  // Choose leaderboard source
+  let board=scores.slice(0,10).map(s=>({id:null,nick:s.name,eggs:s.eggs,ms:s.ms,ts:s.ts,isMe:s.ts===ts}));
+  let rank=scores.findIndex(s=>s.ts===ts&&s.name===playerName);
+  if(remoteEnabled){
+    try{
+      const top=await loadScoresRemote(10);
+      board=top.map(s=>({id:s.id,nick:s.nick,eggs:s.eggs,ms:s.ms,ts:s.ts,isMe:remoteId!=null && s.id===remoteId}));
+      if(remoteId!=null){
+        const ordered=await loadScoresRemote(200);
+        const idx=ordered.findIndex(s=>s.id===remoteId);
+        if(idx>=0) rank=idx;
+      }
+    }catch(e){}
+  }
+
+  const heroes=['🏆','🥇','🥈','🥉','🎖️','🏅'];
+  document.getElementById('end-hero').textContent=heroes[Math.min(Math.max(rank,0),5)]||'🎉';
+  document.getElementById('end-h2').textContent=totalFound===12?'Všechna vajíčka nalezena!':`Nalezeno ${totalFound} z 12`;
+  document.getElementById('end-sub').textContent=`Procestoval/a jsi ${totalFound} kouzelných světů`;
+  document.getElementById('res-name').textContent=playerName;
+  document.getElementById('res-eggs').textContent=totalFound;
+  document.getElementById('res-time').textContent=formatTime(elapsed);
+  document.getElementById('res-rank').textContent=rank>=0?`#${rank+1} na výsledkové listině`:'';
+
+  const lbRows=document.getElementById('lb-rows');
+  lbRows.innerHTML='';
+  const awards=['👑','🌟','✨','🏅','🎖️','🐣','🐣','🐣','🐣','🐣'];
+  const medals=['🥇','🥈','🥉'];
+  board.forEach((s,i)=>{
+    lbRows.innerHTML+=`<div class="lb-row${s.isMe?' me':''}"><span class="lb-rank">${medals[i]||'#'+(i+1)}</span><span class="lb-name">${s.nick}</span><span class="lb-eggs">🥚 ${s.eggs}</span><span class="lb-time">⏱ ${formatTime(s.ms)}</span><span class="lb-award">${awards[i]}</span></div>`;
+  });
+
+  document.getElementById('game').style.display='none';
+  document.getElementById('end-screen').style.display='flex';
+  refreshStats();
+}
+document.getElementById('play-again').addEventListener('click',()=>{currentScene=0;totalFound=0;startTime=null;hintActive=false;clearInterval(timerInterval);document.getElementById('hud-timer').textContent='0:00';document.getElementById('end-screen').style.display='none';document.getElementById('name-input').value='';document.getElementById('email-input').value='';showLbPreview();document.getElementById('intro').style.display='flex';});
+async function showLbPreview(){
+  const div=document.getElementById('lb-preview');
+  let list=[];
+  if(remoteEnabled){
+    try{list=(await loadScoresRemote(4)).map(s=>({name:s.nick,eggs:s.eggs,ms:s.ms}));}catch(e){list=[];}
+  }
+  if(!list.length) list=scores.slice(0,4).map(s=>({name:s.name,eggs:s.eggs,ms:s.ms}));
+  if(!list.length){div.innerHTML='';return;}
+  let html='<div class="lb-preview-title">Dosavadní nejlepší</div>';
+  const medals=['🥇','🥈','🥉'];
+  list.forEach((s,i)=>{html+=`<div class="lb-preview-row"><span class="lbr-rank">${medals[i]||'#'+(i+1)}</span><span class="lbr-name">${s.name}</span><span class="lbr-eggs">🥚 ${s.eggs}</span><span class="lbr-time">⏱ ${formatTime(s.ms)}</span></div>`;});
+  div.innerHTML=html;
+}
 showLbPreview();
+refreshStats();
 </script>
 </body>
 </html>
