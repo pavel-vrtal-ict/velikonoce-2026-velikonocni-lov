@@ -2516,12 +2516,9 @@ const SUPABASE_URL = (window.__VAJICKA_CONFIG__ && window.__VAJICKA_CONFIG__.SUP
 const SUPABASE_ANON_KEY = (window.__VAJICKA_CONFIG__ && window.__VAJICKA_CONFIG__.SUPABASE_ANON_KEY) || '';
 const SUPABASE_TABLE = 'vajicka_scores';
 
-const LOCAL_STORAGE_KEY = 'vajicka_v6_local';
 const remoteEnabled = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 
-let playerName='',playerEmailHash='',currentScene=0,totalFound=0,startTime=null,timerInterval=null,hintActive=false,scores=[];
-try{scores=JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)||'[]');}catch(e){scores=[];}
-function saveScores(){try{localStorage.setItem(LOCAL_STORAGE_KEY,JSON.stringify(scores));}catch(e){}}
+let playerName='',playerEmailHash='',currentScene=0,totalFound=0,startTime=null,timerInterval=null,hintActive=false;
 
 function normalizeEmail(s){return (s||'').trim().toLowerCase();}
 function isSchoolEmail(email){
@@ -2584,10 +2581,7 @@ async function refreshStats(){
       return;
     }
   }catch(e){}
-  const plays=scores.length;
-  const unique=new Set(scores.map(s=>String(s.name||'').trim()).filter(Boolean)).size;
-  const avgMs=plays?Math.round(scores.reduce((a,b)=>a+(b.ms||0),0)/plays):null;
-  setStats({plays,unique,avgMs});
+  setStats({plays:null,unique:null,avgMs:null});
 }
 function formatTime(ms){const s=Math.floor(ms/1000);return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 function buildDots(){const w=document.getElementById('hud-progress');w.innerHTML='';for(let i=0;i<12;i++){const d=document.createElement('div');d.className='egg-dot';d.id=`dot-${i}`;w.appendChild(d);}}
@@ -2665,11 +2659,6 @@ async function endGame(){
   clearInterval(timerInterval);
   const elapsed=Date.now()-startTime;
   const ts=Date.now();
-  const entryLocal={name:playerName,eggs:totalFound,ms:elapsed,ts};
-  scores.push(entryLocal);
-  scores.sort((a,b)=>b.eggs-a.eggs||a.ms-b.ms);
-  if(scores.length>50)scores=scores.slice(0,50);
-  saveScores();
 
   let remoteId=null;
   if(remoteEnabled){
@@ -2687,8 +2676,8 @@ async function endGame(){
   }
 
   // Choose leaderboard source
-  let board=scores.slice(0,10).map(s=>({id:null,nick:s.name,eggs:s.eggs,ms:s.ms,ts:s.ts,isMe:s.ts===ts}));
-  let rank=scores.findIndex(s=>s.ts===ts&&s.name===playerName);
+  let board=[];
+  let rank=-1;
   if(remoteEnabled){
     try{
       const top=await loadScoresRemote(10);
@@ -2729,7 +2718,6 @@ async function showLbPreview(){
   if(remoteEnabled){
     try{list=(await loadScoresRemote(4)).map(s=>({name:s.nick,eggs:s.eggs,ms:s.ms}));}catch(e){list=[];}
   }
-  if(!list.length) list=scores.slice(0,4).map(s=>({name:s.name,eggs:s.eggs,ms:s.ms}));
   if(!list.length){div.innerHTML='';return;}
   let html='<div class="lb-preview-title">Dosavadní nejlepší</div>';
   const medals=['🥇','🥈','🥉'];
