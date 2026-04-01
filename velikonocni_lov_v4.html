@@ -136,8 +136,9 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
     <input id="name-input" type="text" placeholder="Napište přezdívku…" maxlength="22" autocomplete="off"/>
   </div>
   <div class="name-box" style="margin-top:6px">
-    <label>Školní e‑mail pro dohledání (nezobrazuje se)</label>
-    <input id="email-input" type="email" placeholder="např. jmeno.prijmeni@szstrebic.cz" maxlength="64" autocomplete="email" inputmode="email" pattern="^[^\\s@]+@szstrebic\\.cz$"/>
+    <label>Školní e‑mail <span style="font-size:.75rem;color:#aaa;text-transform:none;letter-spacing:0">(nezobrazuje se veřejně)</span></label>
+    <input id="email-input" type="email" placeholder="jmeno.prijmeni@szstrebic.cz" maxlength="64" autocomplete="email" inputmode="email" pattern="^[^\\s@]+@szstrebic\\.cz$"/>
+    <div style="font-size:.75rem;color:#aaa;margin-top:3px">např. <em>jmeno.prijmeni@szstrebic.cz</em></div>
     <div class="field-error hidden" id="email-error">Zadej školní e‑mail ve tvaru <strong>@szstrebic.cz</strong>.</div>
   </div>
   <div class="small-note">
