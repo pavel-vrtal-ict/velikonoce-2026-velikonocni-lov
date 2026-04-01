@@ -202,7 +202,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
   <button id="play-again">Hrát znovu 🐣</button>
 </div>
 
-<script src="config.js?v=20260401_4"></script>
+<script src="config.js?v=20260401_5"></script>
 <script>
 // ─── SCENE BUILDER HELPERS ───────────────────────────────────
 function rain(count,op){let s='';for(let i=0;i<count;i++){const x=i*(1200/count)+Math.sin(i*3)*12;const y=150+Math.cos(i*2)*40;const l=80+Math.sin(i*1.3)*50;s+=`<line x1="${x}" y1="${y}" x2="${x-l*0.18}" y2="${y+l}" stroke="#9abccc" stroke-width="${.6+Math.sin(i)*.3}" opacity="${op}"/>`;}return s;}
@@ -2709,55 +2709,85 @@ async function endGame(){
   const elapsed=Date.now()-startTime;
   const ts=Date.now();
 
+  // Show end screen immediately so user isn't waiting on blank game
+  document.getElementById('game').style.display='none';
+  document.getElementById('end-screen').style.display='flex';
+  document.getElementById('end-hero').textContent='⏳';
+  document.getElementById('end-h2').textContent=totalFound===12?'Všechna vajíčka nalezena!':`Nalezeno ${totalFound} z 12`;
+  document.getElementById('end-sub').textContent='Ukládám výsledek…';
+  document.getElementById('res-name').textContent=playerName;
+  document.getElementById('res-eggs').textContent=totalFound;
+  document.getElementById('res-time').textContent=formatTime(elapsed);
+  document.getElementById('res-rank').textContent='';
+  document.getElementById('lb-rows').innerHTML='<div style="text-align:center;color:#aaa;padding:20px">Načítám žebříček…</div>';
+
   let remoteId=null;
+  let saveError=null;
   if(remoteEnabled){
-    try{
-      const created=await saveScoreRemote({nick:playerName,eggs:totalFound,ms:elapsed,ts,email_hash:playerEmailHash||null});
-      remoteId=created && created.id ? created.id : null;
-    }catch(e){
-      // If limit reached, continue locally but show a clear message.
+    // email_hash musí být neprázdný string
+    const ehash = playerEmailHash && playerEmailHash.length > 0 ? playerEmailHash : null;
+    if(!ehash){
+      saveError='Chyba: e-mail nebyl správně zpracován. Výsledek se neuložil.';
+    } else {
       try{
-        if(String(e && e.message || '').includes('email_limit_reached')){
-          document.getElementById('end-sub').textContent='Limit 3 her na jeden e‑mail byl vyčerpán (výsledek už se do školního žebříčku neuložil).';
+        const created=await saveScoreRemote({nick:playerName,eggs:totalFound,ms:elapsed,ts,email_hash:ehash});
+        remoteId=created && created.id ? created.id : null;
+        if(!remoteId) saveError='Výsledek se nepodařilo uložit (server nevrátil ID).';
+      }catch(e){
+        const msg=String(e && e.message || '');
+        if(msg.includes('email_limit_reached')){
+          saveError='Limit 3 her na jeden e‑mail byl vyčerpán — výsledek se neuložil.';
+        } else {
+          saveError='Chyba při ukládání: '+msg.slice(0,120);
         }
-      }catch(_e){}
+      }
     }
+  } else {
+    saveError='Připojení k serveru není k dispozici — výsledek se neuložil.';
   }
 
-  // Choose leaderboard source
+  // Update save status message
+  if(saveError){
+    document.getElementById('end-sub').textContent=saveError;
+    document.getElementById('end-sub').style.color='#b03030';
+  } else {
+    document.getElementById('end-sub').textContent='Výsledek uložen! 🎉';
+    document.getElementById('end-sub').style.color='var(--green)';
+  }
+
+  // Load leaderboard — small delay to let DB settle
+  await new Promise(r=>setTimeout(r,600));
   let board=[];
   let rank=-1;
   if(remoteEnabled){
     try{
-      const top=await loadScoresRemote(10);
-      board=top.map(s=>({id:s.id,nick:s.nick,eggs:s.eggs,ms:s.ms,ts:s.ts,isMe:remoteId!=null && s.id===remoteId}));
+      const ordered=await loadScoresRemote(200);
       if(remoteId!=null){
-        const ordered=await loadScoresRemote(200);
         const idx=ordered.findIndex(s=>s.id===remoteId);
         if(idx>=0) rank=idx;
       }
+      board=ordered.slice(0,10).map(s=>({id:s.id,nick:s.nick,eggs:s.eggs,ms:s.ms,ts:s.ts,isMe:remoteId!=null && s.id===remoteId}));
     }catch(e){}
   }
 
   const heroes=['🏆','🥇','🥈','🥉','🎖️','🏅'];
   document.getElementById('end-hero').textContent=heroes[Math.min(Math.max(rank,0),5)]||'🎉';
-  document.getElementById('end-h2').textContent=totalFound===12?'Všechna vajíčka nalezena!':`Nalezeno ${totalFound} z 12`;
-  document.getElementById('end-sub').textContent=`Procestoval/a jsi ${totalFound} kouzelných světů`;
-  document.getElementById('res-name').textContent=playerName;
-  document.getElementById('res-eggs').textContent=totalFound;
-  document.getElementById('res-time').textContent=formatTime(elapsed);
+  // Update rank and leaderboard (end-screen already visible)
+  const heroes=['🏆','🥇','🥈','🥉','🎖️','🏅'];
+  document.getElementById('end-hero').textContent=rank>=0?(heroes[Math.min(rank,5)]||'🎉'):(saveError?'😔':'🎉');
   document.getElementById('res-rank').textContent=rank>=0?`#${rank+1} na výsledkové listině`:'';
 
   const lbRows=document.getElementById('lb-rows');
   lbRows.innerHTML='';
-  const awards=['👑','🌟','✨','🏅','🎖️','🐣','🐣','🐣','🐣','🐣'];
-  const medals=['🥇','🥈','🥉'];
-  board.forEach((s,i)=>{
-    lbRows.innerHTML+=`<div class="lb-row${s.isMe?' me':''}"><span class="lb-rank">${medals[i]||'#'+(i+1)}</span><span class="lb-name">${s.nick}</span><span class="lb-eggs">🥚 ${s.eggs}</span><span class="lb-time">⏱ ${formatTime(s.ms)}</span><span class="lb-award">${awards[i]}</span></div>`;
-  });
-
-  document.getElementById('game').style.display='none';
-  document.getElementById('end-screen').style.display='flex';
+  if(board.length===0){
+    lbRows.innerHTML='<div style="text-align:center;color:#aaa;padding:12px">Žebříček není dostupný</div>';
+  } else {
+    const awards=['👑','🌟','✨','🏅','🎖️','🐣','🐣','🐣','🐣','🐣'];
+    const medals=['🥇','🥈','🥉'];
+    board.forEach((s,i)=>{
+      lbRows.innerHTML+=`<div class="lb-row${s.isMe?' me':''}"><span class="lb-rank">${medals[i]||'#'+(i+1)}</span><span class="lb-name">${s.nick}</span><span class="lb-eggs">🥚 ${s.eggs}</span><span class="lb-time">⏱ ${formatTime(s.ms)}</span><span class="lb-award">${awards[i]}</span></div>`;
+    });
+  }
   refreshStats();
 }
 document.getElementById('play-again').addEventListener('click',()=>{currentScene=0;totalFound=0;startTime=null;hintActive=false;hintPenalty=0;clearInterval(timerInterval);document.getElementById('hud-timer').textContent='0:00';document.getElementById('end-screen').style.display='none';document.getElementById('name-input').value='';document.getElementById('email-input').value='';showLbPreview();document.getElementById('intro').style.display='flex';});
