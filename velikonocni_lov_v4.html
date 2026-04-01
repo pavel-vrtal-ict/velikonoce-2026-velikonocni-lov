@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Velikonoční lov vajíček 🐣 v4</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
@@ -35,8 +35,8 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 .lb-preview-row .lbr-name{flex:1}
 .lb-preview-row .lbr-eggs{color:var(--green);font-weight:700}
 .lb-preview-row .lbr-time{color:#999;font-size:.82rem}
-#game{position:fixed;inset:0;display:none;height:100dvh}
-#hud{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(253,248,240,0.92);backdrop-filter:blur(8px);border-bottom:1px solid #e0d4bc;z-index:100}
+#game{position:fixed;inset:0;display:none}
+#hud{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(253,248,240,0.95);backdrop-filter:blur(8px);border-bottom:1px solid #e0d4bc;z-index:100}
 #hud .hud-left{display:flex;gap:16px;align-items:center}
 #hud-progress{display:flex;gap:4px;align-items:center}
 .egg-dot{width:10px;height:13px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#ddd;transition:background .3s,transform .3s}
@@ -44,8 +44,8 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 #hud-scene-name{font-family:'Playfair Display',serif;font-size:1rem;color:#666;font-style:italic}
 #hud-timer{font-variant-numeric:tabular-nums;font-size:1.1rem;font-weight:700;color:var(--dark);letter-spacing:.05em}
 #hud-count{font-size:.9rem;color:#888;font-weight:300}
-#scene-wrap{position:fixed;top:56px;left:0;right:0;bottom:0;overflow:hidden;touch-action:none;background:var(--cream)}
-#scene-canvas{width:100%;height:100%;display:block;touch-action:none}
+#scene-wrap{position:fixed;top:56px;left:0;right:0;bottom:0;overflow:hidden;touch-action:none;background:#1a1a2e;display:flex;align-items:center;justify-content:center}
+#scene-canvas{display:block;touch-action:none;max-width:100%;max-height:100%;width:auto;height:auto}
 #find-toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);opacity:0;background:#fff;border-radius:50px;padding:10px 28px;box-shadow:0 4px 30px #0002;border:1px solid #e0d4bc;display:flex;align-items:center;gap:12px;z-index:150;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap}
 #find-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #find-toast .toast-emoji{font-size:1.6rem}
@@ -80,40 +80,20 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 #play-again{margin-top:28px;font-family:'Lato',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.15em;text-transform:uppercase;background:var(--green);color:#fff;border:none;padding:13px 38px;border-radius:50px;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px #3a7d4433}
 #play-again:hover{transform:translateY(-2px)}
 
-/* Mobile ergonomics */
-@media (max-width: 520px){
-  #intro{justify-content:flex-start}
+/* Mobile: compact HUD */
+@media (max-width: 700px),(max-height: 500px){
   #hud{height:38px;padding:0 10px}
-  #hud .hud-left{gap:10px}
-  .egg-dot{width:8px;height:10px}
-  #hud-count{font-size:.78rem}
-  #hud-scene-name{font-size:.85rem;max-width:36vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #hud-timer{font-size:.95rem}
-  #scene-wrap{top:38px}
-  #hint-btn{bottom:14px;right:14px;padding:9px 16px}
-}
-
-/* === MOBILE LANDSCAPE: HUD as overlay, scene fills full screen === */
-@media (max-height: 500px) and (orientation: landscape){
-  /* HUD floats over the scene — scene gets 100% viewport height */
-  #hud{
-    position:fixed;top:0;left:0;right:0;
-    height:36px;padding:0 8px;
-    background:rgba(253,248,240,0.82);
-    backdrop-filter:blur(6px);
-    z-index:100;
-  }
   #hud .hud-left{gap:8px}
   .egg-dot{width:7px;height:9px}
-  #hud-count{font-size:.72rem}
-  #hud-scene-name{font-size:.78rem;max-width:28vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #hud-timer{font-size:.88rem}
-  /* Scene starts at top:0, fills whole screen; SVG is under the transparent HUD */
-  #scene-wrap{top:0;bottom:0;left:0;right:0;position:fixed}
-  /* Pad content slightly so eggs near top edge aren't behind HUD */
-  #scene-canvas{padding-top:0}
-  #hint-btn{bottom:8px;right:10px;padding:7px 14px;font-size:.75rem}
-  #find-toast{top:44px}
+  #hud-count{font-size:.75rem}
+  #hud-scene-name{font-size:.78rem;max-width:30vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #hud-timer{font-size:.9rem}
+  #scene-wrap{top:38px}
+  #hint-btn{bottom:10px;right:10px;padding:8px 14px;font-size:.75rem}
+  #find-toast{top:46px}
+}
+@media (max-width: 520px){
+  #intro{justify-content:flex-start}
 }
 
 /* Portrait hint overlay for phones */
@@ -201,7 +181,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
   <button id="play-again">Hrát znovu 🐣</button>
 </div>
 
-<script src="config.js?v=20260401_8"></script>
+<script src="config.js?v=20260401_9"></script>
 <script>
 // ─── SCENE BUILDER HELPERS ───────────────────────────────────
 function rain(count,op){let s='';for(let i=0;i<count;i++){const x=i*(1200/count)+Math.sin(i*3)*12;const y=150+Math.cos(i*2)*40;const l=80+Math.sin(i*1.3)*50;s+=`<line x1="${x}" y1="${y}" x2="${x-l*0.18}" y2="${y+l}" stroke="#9abccc" stroke-width="${.6+Math.sin(i)*.3}" opacity="${op}"/>`;}return s;}
@@ -2682,6 +2662,20 @@ document.getElementById('hint-btn').addEventListener('click',()=>{
     document.getElementById('hint-btn').textContent='💡 Nápověda (+20 s)';
   }
 });
+function fitScene(){
+  const wrap=document.getElementById('scene-wrap');
+  const svg=document.getElementById('scene-canvas');
+  if(!wrap||!svg)return;
+  const ww=wrap.clientWidth,wh=wrap.clientHeight;
+  const aspect=1200/700;
+  let w,h;
+  if(ww/wh>aspect){h=wh;w=Math.round(h*aspect);}
+  else{w=ww;h=Math.round(w/aspect);}
+  svg.style.width=w+'px';
+  svg.style.height=h+'px';
+}
+window.addEventListener('resize',fitScene);
+screen.orientation&&screen.orientation.addEventListener('change',()=>setTimeout(fitScene,200));
 function startTimer(){startTime=Date.now();timerInterval=setInterval(()=>{document.getElementById('hud-timer').textContent=formatTime(Date.now()-startTime);},1000);}
 document.getElementById('start-btn').addEventListener('click',async()=>{const n=document.getElementById('name-input').value.trim();if(!n){document.getElementById('name-input').focus();return;}
   const email=document.getElementById('email-input').value.trim();
@@ -2698,6 +2692,7 @@ document.getElementById('start-btn').addEventListener('click',async()=>{const n=
   // do not persist raw email
   document.getElementById('intro').style.display='none';
   document.getElementById('game').style.display='block';
+  fitScene();
   buildDots();renderScene(0);startTimer();
 });
 document.getElementById('name-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('start-btn').click();});
