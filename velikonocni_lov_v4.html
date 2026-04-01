@@ -44,7 +44,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 #hud-scene-name{font-family:'Playfair Display',serif;font-size:1rem;color:#666;font-style:italic}
 #hud-timer{font-variant-numeric:tabular-nums;font-size:1.1rem;font-weight:700;color:var(--dark);letter-spacing:.05em}
 #hud-count{font-size:.9rem;color:#888;font-weight:300}
-#scene-wrap{position:fixed;top:56px;left:0;right:0;bottom:0;overflow:hidden;touch-action:none}
+#scene-wrap{position:fixed;top:56px;left:0;right:0;bottom:0;overflow:hidden;touch-action:none;background:var(--cream)}
 #scene-canvas{width:100%;height:100%;display:block;touch-action:none}
 #find-toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);opacity:0;background:#fff;border-radius:50px;padding:10px 28px;box-shadow:0 4px 30px #0002;border:1px solid #e0d4bc;display:flex;align-items:center;gap:12px;z-index:150;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap}
 #find-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -89,6 +89,29 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
   #hud-timer{font-size:.95rem}
   #scene-wrap{top:38px}
   #hint-btn{bottom:14px;right:14px;padding:9px 16px}
+}
+
+/* === MOBILE LANDSCAPE: HUD as overlay, scene fills full screen === */
+@media (max-height: 500px) and (orientation: landscape){
+  /* HUD floats over the scene — scene gets 100% viewport height */
+  #hud{
+    position:fixed;top:0;left:0;right:0;
+    height:36px;padding:0 8px;
+    background:rgba(253,248,240,0.82);
+    backdrop-filter:blur(6px);
+    z-index:100;
+  }
+  #hud .hud-left{gap:8px}
+  .egg-dot{width:7px;height:9px}
+  #hud-count{font-size:.72rem}
+  #hud-scene-name{font-size:.78rem;max-width:28vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #hud-timer{font-size:.88rem}
+  /* Scene starts at top:0, fills whole screen; SVG is under the transparent HUD */
+  #scene-wrap{top:0;bottom:0;left:0;right:0;position:fixed}
+  /* Pad content slightly so eggs near top edge aren't behind HUD */
+  #scene-canvas{padding-top:0}
+  #hint-btn{bottom:8px;right:10px;padding:7px 14px;font-size:.75rem}
+  #find-toast{top:44px}
 }
 
 /* Portrait hint overlay for phones */
@@ -174,7 +197,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
   <button id="play-again">Hrát znovu 🐣</button>
 </div>
 
-<script src="config.js?v=20260331_3"></script>
+<script src="config.js?v=20260401_2"></script>
 <script>
 // ─── SCENE BUILDER HELPERS ───────────────────────────────────
 function rain(count,op){let s='';for(let i=0;i<count;i++){const x=i*(1200/count)+Math.sin(i*3)*12;const y=150+Math.cos(i*2)*40;const l=80+Math.sin(i*1.3)*50;s+=`<line x1="${x}" y1="${y}" x2="${x-l*0.18}" y2="${y+l}" stroke="#9abccc" stroke-width="${.6+Math.sin(i)*.3}" opacity="${op}"/>`;}return s;}
@@ -2586,7 +2609,7 @@ async function refreshStats(){
 function formatTime(ms){const s=Math.floor(ms/1000);return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 function buildDots(){const w=document.getElementById('hud-progress');w.innerHTML='';for(let i=0;i<12;i++){const d=document.createElement('div');d.className='egg-dot';d.id=`dot-${i}`;w.appendChild(d);}}
 function renderScene(idx){const sc=SCENES[idx];const svg=document.getElementById('scene-canvas');const old=document.getElementById('egg-hotspot');if(old)old.remove();svg.innerHTML=sc.svg;document.getElementById('hud-scene-name').textContent=sc.name;placeEgg(sc.egg,idx);}
-function placeEgg(e,si){const svg=document.getElementById('scene-canvas');const ns='http://www.w3.org/2000/svg';const g=document.createElementNS(ns,'g');g.id='egg-hotspot';g.style.cursor='crosshair';const egg=document.createElementNS(ns,'ellipse');egg.setAttribute('cx',e.x);egg.setAttribute('cy',e.y);egg.setAttribute('rx',e.w/2);egg.setAttribute('ry',e.h/2);egg.setAttribute('fill',e.color);egg.setAttribute('stroke',e.stroke);egg.setAttribute('stroke-width','1.5');egg.setAttribute('opacity',e.opacity);g.appendChild(egg);
+function placeEgg(e,si){const svg=document.getElementById('scene-canvas');const ns='http://www.w3.org/2000/svg';const g=document.createElementNS(ns,'g');g.id='egg-hotspot';g.style.cursor='crosshair';const hit=document.createElementNS(ns,'ellipse');hit.setAttribute('cx',e.x);hit.setAttribute('cy',e.y);hit.setAttribute('rx',e.w/2+24);hit.setAttribute('ry',e.h/2+24);hit.setAttribute('fill','transparent');hit.setAttribute('pointer-events','all');g.appendChild(hit);const egg=document.createElementNS(ns,'ellipse');egg.setAttribute('cx',e.x);egg.setAttribute('cy',e.y);egg.setAttribute('rx',e.w/2);egg.setAttribute('ry',e.h/2);egg.setAttribute('fill',e.color);egg.setAttribute('stroke',e.stroke);egg.setAttribute('stroke-width','1.5');egg.setAttribute('opacity',e.opacity);egg.setAttribute('pointer-events','none');g.appendChild(egg);
 if(e.pattern==='stripes-light'||e.pattern==='stripes-dark'){const sc=e.pattern==='stripes-light'?'rgba(255,255,255,0.22)':'rgba(0,0,0,0.14)';for(let i=-2;i<6;i++){const l=document.createElementNS(ns,'line');l.setAttribute('x1',e.x-e.w/2);l.setAttribute('y1',e.y-e.h/2+i*12);l.setAttribute('x2',e.x+e.w/2);l.setAttribute('y2',e.y-e.h/2+i*12);l.setAttribute('stroke',sc);l.setAttribute('stroke-width','4');l.setAttribute('opacity','.7');g.appendChild(l);}}
 if(e.pattern==='dots'){for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const c=document.createElementNS(ns,'circle');c.setAttribute('cx',e.x+dx*10);c.setAttribute('cy',e.y+dy*12);c.setAttribute('r','2.5');c.setAttribute('fill','rgba(255,255,255,0.2)');g.appendChild(c);}}
 g.addEventListener('pointerdown',ev=>{ev.preventDefault();eggFound(si);});
