@@ -96,7 +96,6 @@ security definer
 set search_path = public
 as $$
 declare
-  existing_count int;
   new_id uuid;
 begin
   if nick is null or length(trim(nick))=0 then
@@ -104,14 +103,6 @@ begin
   end if;
   if email_hash is null or length(trim(email_hash))=0 then
     raise exception 'email_hash_required';
-  end if;
-
-  select count(*) into existing_count
-  from public.vajicka_scores
-  where public.vajicka_scores.email_hash = submit_vajicka_score.email_hash;
-
-  if existing_count >= 3 then
-    raise exception 'email_limit_reached';
   end if;
 
   insert into public.vajicka_scores (nick, eggs, ms, ts, email_hash)
