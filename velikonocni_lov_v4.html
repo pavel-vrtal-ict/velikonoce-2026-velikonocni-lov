@@ -53,6 +53,8 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
 #find-toast .toast-name{font-family:'Playfair Display',serif;font-weight:700;color:var(--green)}
 #hint-btn{position:fixed;bottom:20px;right:20px;background:#fff;border:1px solid #e0d4bc;border-radius:50px;padding:10px 22px;font-size:.8rem;letter-spacing:.08em;cursor:pointer;color:#888;z-index:100;transition:all .2s}
 #hint-btn:hover{color:var(--gold);border-color:var(--gold)}
+@keyframes eggPulse{0%,100%{filter:drop-shadow(0 0 14px rgba(255,210,30,1)) drop-shadow(0 0 28px rgba(255,160,0,0.7))}50%{filter:drop-shadow(0 0 28px rgba(255,210,30,1)) drop-shadow(0 0 55px rgba(255,130,0,0.9))}}
+.egg-hint-active{animation:eggPulse 0.8s ease-in-out infinite}
 .particle{position:fixed;pointer-events:none;z-index:300;border-radius:50%;animation:particleFly .8s ease forwards}
 @keyframes particleFly{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
 #cursor-glow{position:fixed;width:60px;height:60px;border-radius:50%;pointer-events:none;z-index:99;transition:background .15s;transform:translate(-50%,-50%);mix-blend-mode:multiply}
@@ -145,6 +147,9 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
     Pro sdílené statistiky se může ukládat jen jeho <strong>otisk (hash)</strong>.
     <br><strong>Limit:</strong> max. 3 spuštění na jeden školní e‑mail.
   </div>
+  <div class="small-note" style="margin-top:10px;border-top:1px solid #e8e0d0;padding-top:10px">
+    💡 <strong>Nápověda</strong> ukáže vajíčko, ale přidá <strong>+20 sekund</strong> k tvému výsledku.
+  </div>
   <button id="start-btn">Začít hledání</button>
   <button class="link-btn" id="lb-page-btn">🏆 Výsledková listina</button>
   <div class="lb-preview" id="lb-preview"></div>
@@ -197,7 +202,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
   <button id="play-again">Hrát znovu 🐣</button>
 </div>
 
-<script src="config.js?v=20260401_3"></script>
+<script src="config.js?v=20260401_4"></script>
 <script>
 // ─── SCENE BUILDER HELPERS ───────────────────────────────────
 function rain(count,op){let s='';for(let i=0;i<count;i++){const x=i*(1200/count)+Math.sin(i*3)*12;const y=150+Math.cos(i*2)*40;const l=80+Math.sin(i*1.3)*50;s+=`<line x1="${x}" y1="${y}" x2="${x-l*0.18}" y2="${y+l}" stroke="#9abccc" stroke-width="${.6+Math.sin(i)*.3}" opacity="${op}"/>`;}return s;}
@@ -2541,7 +2546,7 @@ const SUPABASE_TABLE = 'vajicka_scores';
 
 const remoteEnabled = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 
-let playerName='',playerEmailHash='',currentScene=0,totalFound=0,startTime=null,timerInterval=null,hintActive=false;
+let playerName='',playerEmailHash='',currentScene=0,totalFound=0,startTime=null,timerInterval=null,hintActive=false,hintPenalty=0;
 
 function normalizeEmail(s){return (s||'').trim().toLowerCase();}
 function isSchoolEmail(email){
@@ -2652,11 +2657,32 @@ function updateProximityGlow(clientX,clientY){
 document.addEventListener('pointermove',e=>updateProximityGlow(e.clientX,e.clientY),{passive:true});
 document.addEventListener('pointerdown',e=>updateProximityGlow(e.clientX,e.clientY),{passive:true});
 function eggFound(si){if(si!==currentScene)return;totalFound++;document.getElementById(`dot-${si}`).classList.add('found');document.getElementById('hud-count').textContent=`${totalFound} / 12`;const g=document.getElementById('egg-hotspot');if(g){g.style.transition='transform .45s, opacity .45s';g.style.transformOrigin=`${SCENES[currentScene].egg.x}px ${SCENES[currentScene].egg.y}px`;g.style.transform='scale(2.2)';g.style.opacity='0';g.style.pointerEvents='none';}spawnParticles();showToast(si+1);if(totalFound===12)setTimeout(endGame,2000);else setTimeout(loadNextScene,1900);}
-function loadNextScene(){currentScene++;hintActive=false;const w=document.getElementById('scene-wrap');w.style.opacity='0';w.style.transition='opacity .45s';setTimeout(()=>{renderScene(currentScene);w.style.opacity='1';},450);}
+function loadNextScene(){currentScene++;hintActive=false;document.getElementById('hint-btn').textContent='💡 Nápověda (+20 s)';const w=document.getElementById('scene-wrap');w.style.opacity='0';w.style.transition='opacity .45s';setTimeout(()=>{renderScene(currentScene);w.style.opacity='1';},450);}
 function spawnParticles(){const cols=['#ff8a65','#ffd54f','#a5d6a7','#90caf9','#f48fb1','#ce93d8','#fff9c4','#80deea'];for(let i=0;i<24;i++){const p=document.createElement('div');p.className='particle';const sz=5+Math.random()*13;const dx=(Math.random()-.5)*260;const dy=-75-Math.random()*155;p.style.cssText=`width:${sz}px;height:${sz}px;background:${cols[Math.floor(Math.random()*cols.length)]};left:50%;top:50%;--dx:${dx}px;--dy:${dy}px;`;document.body.appendChild(p);setTimeout(()=>p.remove(),960);}}
 let toastTimer=null;
 function showToast(num){const sc=SCENES[num-1];const msgs=['Skvělý nález!','Výborně!','Tak schované bylo!','Oko jako sokol!','Báječné!','Gratuluji!','Tady jsi to čekal?','Mistrovský tah!','Jsi neuvěřitelný/á!','Úžasné!','Hurá!','Poslední vajíčko!'];const emojis=['🌧️','🌸','⚓','🏛️','🌲','🌫️','🧺','🐸','🍂','🌾','🌙','🏔️'];document.getElementById('toast-emoji').textContent=emojis[num-1]||'🥚';document.getElementById('toast-num').textContent=`${num}/12`;document.getElementById('toast-name').textContent=sc.name;document.getElementById('toast-msg').textContent=' — '+msgs[num-1];const t=document.getElementById('find-toast');t.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
-document.getElementById('hint-btn').addEventListener('click',()=>{hintActive=!hintActive;const g=document.getElementById('egg-hotspot');if(!g)return;const egg=g.querySelector('ellipse');if(hintActive){egg.setAttribute('opacity',Math.min(1,parseFloat(SCENES[currentScene].egg.opacity)+0.42));egg.setAttribute('stroke-width','3');egg.setAttribute('filter','drop-shadow(0 0 12px rgba(255,220,50,0.95))');document.getElementById('hint-btn').textContent='🙈 Skrýt nápovědu';}else{egg.setAttribute('opacity',SCENES[currentScene].egg.opacity);egg.setAttribute('stroke-width','1.5');egg.removeAttribute('filter');document.getElementById('hint-btn').textContent='💡 Nápověda';}});
+document.getElementById('hint-btn').addEventListener('click',()=>{
+  const g=document.getElementById('egg-hotspot');if(!g)return;
+  const egg=g.querySelector('ellipse[pointer-events="none"]')||g.querySelector('ellipse:last-child');
+  if(!hintActive){
+    // první aktivace nápovědy pro tuto scénu → penalizace +20 s
+    hintActive=true;
+    hintPenalty+=20000;
+    startTime-=20000; // posuň startTime zpět → timer skočí o 20 s vpřed
+    egg.setAttribute('opacity','1');
+    egg.setAttribute('stroke-width','5');
+    egg.setAttribute('stroke','rgba(255,200,0,1)');
+    egg.classList.add('egg-hint-active');
+    document.getElementById('hint-btn').textContent='🙈 Skrýt nápovědu (+20 s)';
+  }else{
+    hintActive=false;
+    egg.setAttribute('opacity',SCENES[currentScene].egg.opacity);
+    egg.setAttribute('stroke-width','1.5');
+    egg.setAttribute('stroke',SCENES[currentScene].egg.stroke);
+    egg.classList.remove('egg-hint-active');
+    document.getElementById('hint-btn').textContent='💡 Nápověda (+20 s)';
+  }
+});
 function startTimer(){startTime=Date.now();timerInterval=setInterval(()=>{document.getElementById('hud-timer').textContent=formatTime(Date.now()-startTime);},1000);}
 document.getElementById('start-btn').addEventListener('click',async()=>{const n=document.getElementById('name-input').value.trim();if(!n){document.getElementById('name-input').focus();return;}
   const email=document.getElementById('email-input').value.trim();
@@ -2734,7 +2760,7 @@ async function endGame(){
   document.getElementById('end-screen').style.display='flex';
   refreshStats();
 }
-document.getElementById('play-again').addEventListener('click',()=>{currentScene=0;totalFound=0;startTime=null;hintActive=false;clearInterval(timerInterval);document.getElementById('hud-timer').textContent='0:00';document.getElementById('end-screen').style.display='none';document.getElementById('name-input').value='';document.getElementById('email-input').value='';showLbPreview();document.getElementById('intro').style.display='flex';});
+document.getElementById('play-again').addEventListener('click',()=>{currentScene=0;totalFound=0;startTime=null;hintActive=false;hintPenalty=0;clearInterval(timerInterval);document.getElementById('hud-timer').textContent='0:00';document.getElementById('end-screen').style.display='none';document.getElementById('name-input').value='';document.getElementById('email-input').value='';showLbPreview();document.getElementById('intro').style.display='flex';});
 async function showLbPreview(){
   const div=document.getElementById('lb-preview');
   let list=[];
