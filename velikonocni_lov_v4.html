@@ -201,7 +201,7 @@ body{font-family:'Lato',sans-serif;background:var(--cream);color:var(--dark);ove
   <button id="play-again">Hrát znovu 🐣</button>
 </div>
 
-<script src="config.js?v=20260401_6"></script>
+<script src="config.js?v=20260401_7"></script>
 <script>
 // ─── SCENE BUILDER HELPERS ───────────────────────────────────
 function rain(count,op){let s='';for(let i=0;i<count;i++){const x=i*(1200/count)+Math.sin(i*3)*12;const y=150+Math.cos(i*2)*40;const l=80+Math.sin(i*1.3)*50;s+=`<line x1="${x}" y1="${y}" x2="${x-l*0.18}" y2="${y+l}" stroke="#9abccc" stroke-width="${.6+Math.sin(i)*.3}" opacity="${op}"/>`;}return s;}
@@ -2734,9 +2734,7 @@ async function endGame(){
         if(!remoteId) saveError='Výsledek se nepodařilo uložit (server nevrátil ID).';
       }catch(e){
         const msg=String(e && e.message || '');
-        {
-          saveError='Chyba při ukládání: '+msg.slice(0,120);
-        }
+        saveError='Chyba při ukládání: '+msg.slice(0,120);
       }
     }
   } else {
